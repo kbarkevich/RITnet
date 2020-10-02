@@ -6,6 +6,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # Data input settings
     parser.add_argument('--dataset', type=str, default='Semantic_Segmentation_Dataset/', help='name of dataset')
+    parser.add_argument('--video', type=str, default='eye.mp4', help='name of input video')
     # Optimization: General
     parser.add_argument('--bs', type=int, default = 8 )
     parser.add_argument('--epochs', type=int,help='Number of epochs',default= 250)

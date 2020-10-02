@@ -60,7 +60,7 @@ if __name__ == '__main__':
             print (i)
             img,labels,index,x,y= test_set[i] #batchdata
             img = img.unsqueeze(1)
-            data = img.to(device)       
+            data = img.to(device)   
             output = model(data)
             predict = get_predictions(output)
             
