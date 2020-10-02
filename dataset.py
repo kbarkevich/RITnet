@@ -204,10 +204,10 @@ class IrisDataset(Dataset):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    ds = IrisDataset('Semantic_Segmentation_Dataset',split='train',transform=transform)
+    ds = IrisDataset('Semantic_Segmentation_Dataset',split='test',transform=transform)
 #    for i in range(1000):
-    img, label, idx,x,y= ds[0]
+    img, label, idx,x,y= ds[2]
     plt.subplot(121)
-    plt.imshow(np.array(label))
+    ##plt.imshow(np.array(label))
     plt.subplot(122)
     plt.imshow(np.array(img)[0,:,:],cmap='gray')

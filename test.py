@@ -55,23 +55,38 @@ if __name__ == '__main__':
     os.makedirs('test/mask/',exist_ok=True)
     
     with torch.no_grad():
-        for i, batchdata in tqdm(enumerate(testloader),total=len(testloader)):
-            img,labels,index,x,y= batchdata
+        # for i, batchdata in tqdm(enumerate(testloader),total=len(testloader)):
+        for i in range(3):
+            print (i)
+            img,labels,index,x,y= test_set[i] #batchdata
+            img = img.unsqueeze(1)
             data = img.to(device)       
-            output = model(data)            
+            output = model(data)
             predict = get_predictions(output)
-            for j in range (len(index)):       
-                np.save('test/labels/{}.npy'.format(index[j]),predict[j].cpu().numpy())
-                try:
-                    plt.imsave('test/output/{}.jpg'.format(index[j]),255*labels[j].cpu().numpy())
-                except:
-                    pass
+            
+            ## --- EXPERIMENTING ---
+            # print(predict)
+            # if i == 1:
+            #     for p in output[0]:
+            #         for q in p:
+            #             print(q)
+                        
+            # for j in range (len(index)):     
+            j = 0
+            np.save('test/labels/{}.npy'.format(index),predict[j].cpu().numpy())
+            try:
+                plt.imsave('test/output/{}.jpg'.format(index),255*labels[j].cpu().numpy())
+            except:
+                pass
+            
+            ## --- EXPERIMENTING ---
+                # pred_img = output[0][0].cpu().numpy()/3.0
                 
-                pred_img = predict[j].cpu().numpy()/3.0
-                inp = img[j].squeeze() * 0.5 + 0.5
-                img_orig = np.clip(inp,0,1)
-                img_orig = np.array(img_orig)
-                combine = np.hstack([img_orig,pred_img])
-                plt.imsave('test/mask/{}.jpg'.format(index[j]),combine)
+            pred_img = predict[j].cpu().numpy()/3.0
+            inp = img[j].squeeze() * 0.5 + 0.5
+            img_orig = np.clip(inp,0,1)
+            img_orig = np.array(img_orig)
+            combine = np.hstack([img_orig,pred_img])
+            plt.imsave('test/mask/{}.jpg'.format(index),combine)
 
-    os.rename('test',args.save)
+    # os.rename('test',args.save)
