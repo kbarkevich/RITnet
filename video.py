@@ -17,6 +17,7 @@ from models import model_dict
 from tqdm import tqdm
 from utils import get_predictions
 from PIL import Image, ImageOps
+from image import get_mask_from_cv2_image, get_mask_from_PIL_image
 
 if __name__ == '__main__':
     
@@ -64,33 +65,24 @@ if __name__ == '__main__':
     count = 0
     
     def process_frame(frame, do_corrections=True):
-        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(img).convert("L")
+        img = Image.fromarray(frame).convert("L")
         if do_corrections:
             img = cv2.LUT(np.array(img), table)
             img = clahe.apply(np.array(np.uint8(img)))
             img = Image.fromarray(img)
         img = transform(img)
         return img
-    
+
     while True:
         flag, frame = video.read()
         if flag:
             count += 1
-            img = process_frame(frame)
-            img = img.unsqueeze(1)
-            data = img.to(device)
-            output = model(data)
-
-            predict = get_predictions(output)
             
             # cv2.imshow('video', frame)
             # cv2.imshow('output', output[0][0].cpu().detach().numpy()/3.0)
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
-            
-            pred_img = 1 - predict[0].cpu().numpy()/3.0
-            pred_img = np.ceil(pred_img)
+            pred_img = get_mask_from_PIL_image(frame, model, True, True)
             inp = process_frame(frame, False).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
