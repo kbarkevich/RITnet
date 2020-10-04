@@ -16,7 +16,7 @@ from opt import parse_args
 from models import model_dict
 from tqdm import tqdm
 from utils import get_predictions
-from PIL import Image
+from PIL import Image, ImageOps
 
 if __name__ == '__main__':
     
@@ -81,6 +81,7 @@ if __name__ == '__main__':
             img = img.unsqueeze(1)
             data = img.to(device)
             output = model(data)
+
             predict = get_predictions(output)
             
             # cv2.imshow('video', frame)
@@ -88,7 +89,8 @@ if __name__ == '__main__':
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             
-            pred_img = predict[0].cpu().numpy()/3.0
+            pred_img = 1 - predict[0].cpu().numpy()/3.0
+            pred_img = np.ceil(pred_img)
             inp = process_frame(frame, False).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
