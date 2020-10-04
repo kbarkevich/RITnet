@@ -5,22 +5,17 @@ Created on Sun Oct  4 19:09:16 2020
 @author: Kevin Barkevich
 """
 import torch
-from dataset import IrisDataset
-from torch.utils.data import DataLoader 
 import numpy as np
-import matplotlib.pyplot as plt
 from dataset import transform
-import os
 import cv2
-from opt import parse_args
-from models import model_dict
-from tqdm import tqdm
 from utils import get_predictions
-from PIL import Image, ImageOps
+from PIL import Image
 
-def process_PIL_image(frame, do_corrections=True):
-    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))
-    table = 255.0*(np.linspace(0, 1, 256)**0.8)
+def process_PIL_image(frame, do_corrections=True, clahe=None, table=None):
+    if clahe is None:
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))
+    if table is None:
+        table = 255.0*(np.linspace(0, 1, 256)**0.8)
     img = Image.fromarray(frame).convert("L")
     if do_corrections:
         img = cv2.LUT(np.array(img), table)

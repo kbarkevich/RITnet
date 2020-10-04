@@ -5,19 +5,12 @@ Created on Fri Oct  2 13:36:02 2020
 @author: Kevin Barkevich
 """
 import torch
-from dataset import IrisDataset
-from torch.utils.data import DataLoader 
 import numpy as np
-import matplotlib.pyplot as plt
-from dataset import transform
 import os
 import cv2
 from opt import parse_args
 from models import model_dict
-from tqdm import tqdm
-from utils import get_predictions
-from PIL import Image, ImageOps
-from image import get_mask_from_cv2_image, get_mask_from_PIL_image
+from image import get_mask_from_PIL_image, process_PIL_image
 
 if __name__ == '__main__':
     
@@ -63,15 +56,6 @@ if __name__ == '__main__':
     clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))
     table = 255.0*(np.linspace(0, 1, 256)**0.8)
     count = 0
-    
-    def process_frame(frame, do_corrections=True):
-        img = Image.fromarray(frame).convert("L")
-        if do_corrections:
-            img = cv2.LUT(np.array(img), table)
-            img = clahe.apply(np.array(np.uint8(img)))
-            img = Image.fromarray(img)
-        img = transform(img)
-        return img
 
     while True:
         flag, frame = video.read()
@@ -83,7 +67,7 @@ if __name__ == '__main__':
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             pred_img = get_mask_from_PIL_image(frame, model, True, True)
-            inp = process_frame(frame, False).squeeze() * 0.5 + 0.5
+            inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
             combine = np.hstack([img_orig,pred_img])
