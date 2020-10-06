@@ -4,5 +4,6 @@
 /_pycache_/
 /Semantic_Segmentation_Dataset/
 /test/
+/video/
 *.zip
 *.mp4

@@ -46,7 +46,9 @@ if __name__ == '__main__':
     width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
     fourcc = cv2.VideoWriter_fourcc(*"X264")
-    videowriter = cv2.VideoWriter("out.mp4", fourcc, fps, (int(width),int(height)))
+    os.makedirs('video/',exist_ok=True)
+    videowriter = cv2.VideoWriter("video/out.mp4", fourcc, fps, (int(width*3),int(height)))
+    maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
     while not video.isOpened():
         video = cv2.VideoCapture(args.video)
         cv2.waitKey(1000)
@@ -70,9 +72,10 @@ if __name__ == '__main__':
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
-            combine = np.hstack([img_orig,pred_img])
+            combine = np.hstack([img_orig,get_mask_from_PIL_image(frame, model, True, False),pred_img])
             cv2.imshow('RITnet', combine)
-            videowriter.write((pred_img * 255).astype('uint8'))  # write to video output
+            maskvideowriter.write((pred_img * 255).astype('uint8'))  # write to mask video output
+            videowriter.write((combine * 255).astype('uint8')) # write to video output
             print(str(pos_frame)+" frames")
         else:
             # Wait for next frame
@@ -82,11 +85,13 @@ if __name__ == '__main__':
         
         if cv2.waitKey(10) == 27:
             video.release()
+            maskvideowriter.release()
             videowriter.release()
             cv2.destroyAllWindows()
             break
         if video.get(cv2.CAP_PROP_POS_FRAMES) == video.get(cv2.CAP_PROP_FRAME_COUNT):
             video.release()
+            maskvideowriter.release()
             videowriter.release()
             cv2.destroyAllWindows()
             break
