@@ -10,6 +10,7 @@ import os
 import cv2
 from opt import parse_args
 from models import model_dict
+import matplotlib.pyplot as plt
 from image import get_mask_from_PIL_image, process_PIL_image
 
 if __name__ == '__main__':
@@ -46,17 +47,21 @@ if __name__ == '__main__':
     width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
     fourcc = cv2.VideoWriter_fourcc(*"X264")
-    os.makedirs('video/',exist_ok=True)
-    videowriter = cv2.VideoWriter("video/out.mp4", fourcc, fps, (int(width*3),int(height)))
-    maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
+    os.makedirs('video/images/',exist_ok=True)
+    os.makedirs('video/outputs/',exist_ok=True)
+    videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3),int(height)))
+    # maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
     while not video.isOpened():
         video = cv2.VideoCapture(args.video)
         cv2.waitKey(1000)
         print("Wait for the header")
     
     pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
-    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))
-    table = 255.0*(np.linspace(0, 1, 256)**0.8)
+    
+    # GAMMA CORRECTION STEP
+    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))  # EDIT NUMBERS HERE FOR POSSIBLE BETTTER LOW-LIGHT PERFORMANCE
+    table = 255.0*(np.linspace(0, 1, 256)**0.8)  # CHANGE 0.8 TO 0.6 FOR THE DARKER VIDEO
+    
     count = 0
 
     while True:
@@ -74,7 +79,8 @@ if __name__ == '__main__':
             img_orig = np.array(img_orig)
             combine = np.hstack([img_orig,get_mask_from_PIL_image(frame, model, True, False),pred_img])
             cv2.imshow('RITnet', combine)
-            maskvideowriter.write((pred_img * 255).astype('uint8'))  # write to mask video output
+            plt.imsave('video/images/{}.png'.format(count),(pred_img * 255))
+            # maskvideowriter.write((pred_img * 255).astype('uint8'))  # write to mask video output
             videowriter.write((combine * 255).astype('uint8')) # write to video output
             print(str(pos_frame)+" frames")
         else:
@@ -85,16 +91,17 @@ if __name__ == '__main__':
         
         if cv2.waitKey(10) == 27:
             video.release()
-            maskvideowriter.release()
+            # maskvideowriter.release()
             videowriter.release()
             cv2.destroyAllWindows()
             break
         if video.get(cv2.CAP_PROP_POS_FRAMES) == video.get(cv2.CAP_PROP_FRAME_COUNT):
             video.release()
-            maskvideowriter.release()
+            # maskvideowriter.release()
             videowriter.release()
             cv2.destroyAllWindows()
             break
+    os.system('cd "'+os.path.dirname(os.path.realpath(__file__))+'" & ffmpeg -r '+str(fps)+' -i ".\\video\\images\\%d.png" -c:v mpeg4 -vcodec libx264 -r '+str(fps)+' ".\\video\\outputs\\mask.mp4"')
             
 
     # os.rename('test',args.save)

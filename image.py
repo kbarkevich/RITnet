@@ -54,7 +54,7 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False):
     predict = get_predictions(output)
     pred_img = 1 - predict[0].cpu().numpy()/3.0
     if pupilOnly:
-        pred_img = np.ceil(pred_img)
+        pred_img = np.ceil(pred_img) * 0.5
     return pred_img
 
 def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False):
