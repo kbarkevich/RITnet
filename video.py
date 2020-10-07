@@ -73,13 +73,17 @@ if __name__ == '__main__':
             # cv2.imshow('output', output[0][0].cpu().detach().numpy()/3.0)
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
-            pred_img = get_mask_from_PIL_image(frame, model, True, True)
+            pred_img = get_mask_from_PIL_image(frame, model, True, False)
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
             combine = np.hstack([img_orig,get_mask_from_PIL_image(frame, model, True, False),pred_img])
             cv2.imshow('RITnet', combine)
-            plt.imsave('video/images/{}.png'.format(count),(pred_img * 255))
+            pred_img_3=np.zeros((pred_img.shape[0],pred_img.shape[1],3))
+            pred_img_3[:,:,0]=pred_img
+            pred_img_3[:,:,1]=pred_img
+            pred_img_3[:,:,2]=pred_img
+            plt.imsave('video/images/{}.png'.format(count),np.uint8(pred_img_3 * 255))
             # maskvideowriter.write((pred_img * 255).astype('uint8'))  # write to mask video output
             videowriter.write((combine * 255).astype('uint8')) # write to video output
             print(str(pos_frame)+" frames")

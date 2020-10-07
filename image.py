@@ -4,12 +4,28 @@ Created on Sun Oct  4 19:09:16 2020
 
 @author: Kevin Barkevich
 """
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import torch
 import numpy as np
+from models import model_dict
 from dataset import transform
 import cv2
 from utils import get_predictions
 from PIL import Image
+
+def init_model(devicestr="cuda"):
+    device = torch.device(devicestr)
+    model = model_dict["densenet"]
+    model  = model.to(device)
+    filename = os.path.dirname(os.path.abspath(__file__)) + "/ritnet_pupil.pkl";
+        
+    model.load_state_dict(torch.load(filename))
+    model = model.to(device)
+    model.eval()
+    return model
 
 def process_PIL_image(frame, do_corrections=True, clahe=None, table=None):
     if clahe is None:
