@@ -15,6 +15,7 @@ from dataset import transform
 import cv2
 from utils import get_predictions
 from PIL import Image
+from helperfunctions import get_pupil_parameters
 
 def init_model(devicestr="cuda"):
     device = torch.device(devicestr)
@@ -76,3 +77,22 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False):
 def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False):
     img = process_PIL_image(pilimage)
     return get_mask_from_cv2_image(img, model, useGpu, pupilOnly)
+    
+def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True):
+    if useGpu:
+        device=torch.device("cuda")
+    else:
+        device=torch.device("cpu")
+        
+    img = image.unsqueeze(1)
+    data = img.to(device)   
+    output = model(data)
+    predict = get_predictions(output)
+    return get_pupil_parameters(predict[0].numpy())
+    
+def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True):
+    img = process_PIL_image(pilimage)
+    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu)
+    if res is not None:
+        res[4] = res[4] * 180 / np.pi
+    return res
