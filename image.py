@@ -9,6 +9,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import torch
+import torchvision
 import numpy as np
 from models import model_dict
 from dataset import transform
@@ -64,7 +65,7 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False):
         device=torch.device("cuda")
     else:
         device=torch.device("cpu")
-        
+    
     img = image.unsqueeze(1)
     data = img.to(device)   
     output = model(data)

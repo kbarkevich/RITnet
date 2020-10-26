@@ -73,6 +73,15 @@ if __name__ == '__main__':
             # cv2.imshow('output', output[0][0].cpu().detach().numpy()/3.0)
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
+            
+            (h, w) = frame.shape[:2]
+
+            center = (w / 2, h / 2)
+            
+            # Perform the rotation
+            M = cv2.getRotationMatrix2D(center, -25, 1.0)
+            frame = cv2.warpAffine(frame, M, (w, h))
+            
             pred_img = get_mask_from_PIL_image(frame, model, True, False)
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
