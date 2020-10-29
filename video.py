@@ -60,7 +60,10 @@ if __name__ == '__main__':
     
     # GAMMA CORRECTION STEP
     clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))  # EDIT NUMBERS HERE FOR POSSIBLE BETTTER LOW-LIGHT PERFORMANCE
-    table = 255.0*(np.linspace(0, 1, 256)**0.8)  # CHANGE 0.8 TO 0.6 FOR THE DARKER VIDEO
+    table = 255.0*(np.linspace(0, 1, 256)**0.6)  # CHANGE 0.8 TO 0.6 FOR THE DARKER VIDEO
+    
+    # only do if resolution is 192x192, if statement
+    # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
     
     count = 0
 
@@ -74,11 +77,38 @@ if __name__ == '__main__':
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             
-            (h, w) = frame.shape[:2]
+            pad = False
+            # If the video is 192x192, pad the sides 32 pixels each
+            if tuple(frame.shape[1::-1]) == (192, 192):
+                pad = True
+                frame1 = cv2.copyMakeBorder(
+                        frame,
+                        top=0,
+                        bottom=0,
+                        left=32,
+                        right=32,
+                        borderType=cv2.BORDER_CONSTANT,
+                        value=(0,0,0)
+                )
+                    
+                # Perform the rotation
+                (h, w) = frame1.shape[:2]
+                center = (w / 2, h / 2)
+                M = cv2.getRotationMatrix2D(center, -25, 1.0)
+                frame1 = cv2.warpAffine(frame1, M, (w, h))
+                
+                pred_img = get_mask_from_PIL_image(frame1, model, True, False)
+                inp = process_PIL_image(frame1, False, clahe, table).squeeze() * 0.5 + 0.5
+                img_orig = np.clip(inp,0,1)
+                img_orig = np.array(img_orig)
+                stretchedcombine = np.hstack([img_orig,get_mask_from_PIL_image(frame1, model, True, False),pred_img])
 
-            center = (w / 2, h / 2)
+            
+            # ---------------------------------------------------
             
             # Perform the rotation
+            (h, w) = frame.shape[:2]
+            center = (w / 2, h / 2)
             M = cv2.getRotationMatrix2D(center, -25, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
             
@@ -87,6 +117,18 @@ if __name__ == '__main__':
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
             combine = np.hstack([img_orig,get_mask_from_PIL_image(frame, model, True, False),pred_img])
+            
+            if pad:
+                height = len(combine[0])
+                r = []
+                for i in range(len(stretchedcombine[0]) - len(combine[0])):
+                    e = []
+                    for j in range(len(combine)):
+                        e.append(0)
+                    r.append(e)
+                combine = np.append(combine, r, axis=1)
+                combine = np.vstack([combine, stretchedcombine])
+            
             cv2.imshow('RITnet', combine)
             pred_img_3=np.zeros((pred_img.shape[0],pred_img.shape[1],3))
             pred_img_3[:,:,0]=pred_img
