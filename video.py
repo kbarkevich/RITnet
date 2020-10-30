@@ -12,9 +12,9 @@ from opt import parse_args
 from models import model_dict
 import matplotlib.pyplot as plt
 from image import get_mask_from_PIL_image, process_PIL_image
+import asyncio
 
-if __name__ == '__main__':
-    
+async def main():
     args = parse_args()
    
     if args.model not in model_dict:
@@ -49,7 +49,10 @@ if __name__ == '__main__':
     fourcc = cv2.VideoWriter_fourcc(*"X264")
     os.makedirs('video/images/',exist_ok=True)
     os.makedirs('video/outputs/',exist_ok=True)
-    videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3),int(height)))
+    if width == 192 and height == 192:
+        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3+192),int(height*2)))
+    else:
+        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3),int(height)))
     # maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
     while not video.isOpened():
         video = cv2.VideoCapture(args.video)
@@ -62,10 +65,29 @@ if __name__ == '__main__':
     clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8,8))  # EDIT NUMBERS HERE FOR POSSIBLE BETTTER LOW-LIGHT PERFORMANCE
     table = 255.0*(np.linspace(0, 1, 256)**0.6)  # CHANGE 0.8 TO 0.6 FOR THE DARKER VIDEO
     
-    # only do if resolution is 192x192, if statement
-    # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
-    
     count = 0
+
+    async def get_stretched_combine(frame):
+        frame1 = cv2.copyMakeBorder(
+                    frame,
+                    top=0,
+                    bottom=0,
+                    left=32,
+                    right=32,
+                    borderType=cv2.BORDER_CONSTANT,
+                    value=(0,0,0)
+            )
+        # Perform the rotation
+        (h, w) = frame1.shape[:2]
+        center = (w / 2, h / 2)
+        M = cv2.getRotationMatrix2D(center, -25, 1.0)
+        frame1 = cv2.warpAffine(frame1, M, (w, h))
+        pred_img = get_mask_from_PIL_image(frame1, model, True, False)
+        inp = process_PIL_image(frame1, False, clahe, table).squeeze() * 0.5 + 0.5
+        img_orig = np.clip(inp,0,1)
+        img_orig = np.array(img_orig)
+        stretchedcombine = np.hstack([img_orig,get_mask_from_PIL_image(frame1, model, True, False),pred_img])
+        return stretchedcombine
 
     while True:
         flag, frame = video.read()
@@ -78,31 +100,12 @@ if __name__ == '__main__':
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             
             pad = False
+            
             # If the video is 192x192, pad the sides 32 pixels each
+            # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
             if tuple(frame.shape[1::-1]) == (192, 192):
                 pad = True
-                frame1 = cv2.copyMakeBorder(
-                        frame,
-                        top=0,
-                        bottom=0,
-                        left=32,
-                        right=32,
-                        borderType=cv2.BORDER_CONSTANT,
-                        value=(0,0,0)
-                )
-                    
-                # Perform the rotation
-                (h, w) = frame1.shape[:2]
-                center = (w / 2, h / 2)
-                M = cv2.getRotationMatrix2D(center, -25, 1.0)
-                frame1 = cv2.warpAffine(frame1, M, (w, h))
-                
-                pred_img = get_mask_from_PIL_image(frame1, model, True, False)
-                inp = process_PIL_image(frame1, False, clahe, table).squeeze() * 0.5 + 0.5
-                img_orig = np.clip(inp,0,1)
-                img_orig = np.array(img_orig)
-                stretchedcombine = np.hstack([img_orig,get_mask_from_PIL_image(frame1, model, True, False),pred_img])
-
+                comb = get_stretched_combine(frame.copy())
             
             # ---------------------------------------------------
             
@@ -119,13 +122,15 @@ if __name__ == '__main__':
             combine = np.hstack([img_orig,get_mask_from_PIL_image(frame, model, True, False),pred_img])
             
             if pad:
+                stretchedcombine = await comb
                 height = len(combine[0])
                 r = []
+                e = []
+                for j in range(len(combine)):
+                    e.append(0)
                 for i in range(len(stretchedcombine[0]) - len(combine[0])):
-                    e = []
-                    for j in range(len(combine)):
-                        e.append(0)
                     r.append(e)
+                
                 combine = np.append(combine, r, axis=1)
                 combine = np.vstack([combine, stretchedcombine])
             
@@ -160,3 +165,7 @@ if __name__ == '__main__':
             
 
     # os.rename('test',args.save)
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
