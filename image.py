@@ -97,3 +97,73 @@ def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True):
     if res is not None:
         res[4] = res[4] * 180 / np.pi
     return res
+
+def get_area_perimiters_from_mask(image):    
+    #set a thresh for iris
+    thresh = 0.9
+    #get threshold image
+    ret,thresh_img = cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY_INV)
+    thresh_img = thresh_img.astype(np.uint8)
+    iris_area = np.sum(thresh_img != 0)
+    #find iris contours
+    iris_image, iris_contours, iris_hierarchy = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    #set a thresh for pupil
+    thresh = 0.1
+    #get threshold image
+    ret,thresh_img = cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY_INV)
+    thresh_img = thresh_img.astype(np.uint8)
+    pupil_area = np.sum(thresh_img != 0)
+    #find pupil contours
+    pupil_image, pupil_contours, pupil_hierarchy = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    iris_perimeter = 0
+    pupil_perimeter = 0
+    
+    for c in iris_contours:
+        peri = cv2.arcLength(c, True)
+        iris_perimeter = iris_perimeter + peri
+    for c in pupil_contours:
+        peri = cv2.arcLength(c, True)
+        pupil_perimeter = pupil_perimeter + peri
+    
+    #print(f'Perimeter = {int(round(perimeter,0))} pixels')
+
+    return iris_perimeter, pupil_perimeter, iris_area, pupil_area
+
+def get_polsby_popper_score(perimeter, area):
+    try:
+        return (4 * np.pi * area) / (np.square(perimeter))
+    except:
+        return 0
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

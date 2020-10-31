@@ -11,10 +11,14 @@ import cv2
 from opt import parse_args
 from models import model_dict
 import matplotlib.pyplot as plt
-from image import get_mask_from_PIL_image, process_PIL_image
+from image import get_mask_from_PIL_image, process_PIL_image, get_area_perimiters_from_mask, get_polsby_popper_score
 import asyncio
+import math
 
-async def main():
+ROTATION = -25
+PAD = False
+
+def main():
     args = parse_args()
    
     if args.model not in model_dict:
@@ -49,8 +53,10 @@ async def main():
     fourcc = cv2.VideoWriter_fourcc(*"X264")
     os.makedirs('video/images/',exist_ok=True)
     os.makedirs('video/outputs/',exist_ok=True)
-    if width == 192 and height == 192:
+    if PAD and width == 192 and height == 192:
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3+192),int(height*2)))
+    elif PAD and width == 400 and height == 400:
+        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3+400),int(height*2)))
     else:
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*3),int(height)))
     # maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
@@ -67,13 +73,13 @@ async def main():
     
     count = 0
 
-    async def get_stretched_combine(frame):
+    def get_stretched_combine(frame, pad):
         frame1 = cv2.copyMakeBorder(
                     frame,
                     top=0,
                     bottom=0,
-                    left=32,
-                    right=32,
+                    left=int(pad),
+                    right=int(pad),
                     borderType=cv2.BORDER_CONSTANT,
                     value=(0,0,0)
             )
@@ -83,17 +89,22 @@ async def main():
         M = cv2.getRotationMatrix2D(center, -25, 1.0)
         frame1 = cv2.warpAffine(frame1, M, (w, h))
         pred_img = get_mask_from_PIL_image(frame1, model, True, False)
+
         inp = process_PIL_image(frame1, False, clahe, table).squeeze() * 0.5 + 0.5
+
         img_orig = np.clip(inp,0,1)
         img_orig = np.array(img_orig)
         stretchedcombine = np.hstack([img_orig,get_mask_from_PIL_image(frame1, model, True, False),pred_img])
         return stretchedcombine
-
+    
+    pp_x = []
+    pp_iris_y = []
+    pp_pupil_y = []
     while True:
         flag, frame = video.read()
         if flag:
             count += 1
-            
+            pp_x.append(count)
             # cv2.imshow('video', frame)
             # cv2.imshow('output', output[0][0].cpu().detach().numpy()/3.0)
             # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
@@ -103,9 +114,10 @@ async def main():
             
             # If the video is 192x192, pad the sides 32 pixels each
             # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
-            if tuple(frame.shape[1::-1]) == (192, 192):
+            if PAD and (tuple(frame.shape[1::-1]) == (192, 192) or tuple(frame.shape[1::-1]) == (400, 400)):
+                #pass
                 pad = True
-                comb = get_stretched_combine(frame.copy())
+                comb = get_stretched_combine(frame.copy(), tuple(frame.shape[1::-1])[0]/6)
             
             # ---------------------------------------------------
             
@@ -114,15 +126,36 @@ async def main():
             center = (w / 2, h / 2)
             M = cv2.getRotationMatrix2D(center, -25, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
-            
+                
             pred_img = get_mask_from_PIL_image(frame, model, True, False)
+            iris_perimeter, pupil_perimeter, iris_area, pupil_area = get_area_perimiters_from_mask(pred_img)
+            
+            pp_iris = get_polsby_popper_score(iris_perimeter, iris_area)
+            pp_pupil = get_polsby_popper_score(pupil_perimeter, pupil_area)
+            if math.isnan(pp_iris) or pp_iris >= 1 or pp_iris <= 0:
+                if len(pp_iris_y) > 0:
+                    pp_iris = pp_iris_y[len(pp_iris_y)-1]
+                else:
+                    pp_iris = 0
+            if math.isnan(pp_pupil) or pp_pupil >= 1 or pp_pupil <= 0:
+                pp_pupil = 0
+            pp_iris_y.append(pp_iris)
+            pp_pupil_y.append(pp_pupil)
+            
+            plt.title("Pupil Polsby-Popper Score")
+            plt.xlabel("frame")
+            plt.ylabel("score (higher is better)")
+            plt.plot(pp_x, pp_pupil_y)
+            plt.ylim(bottom=0, top=1)
+            plt.show()
+            
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
-            combine = np.hstack([img_orig,get_mask_from_PIL_image(frame, model, True, False),pred_img])
-            
+            combine = np.hstack([img_orig,pred_img,pred_img])
+            #combine = get_stretched_combine(frame.copy(), tuple(frame.shape[1::-1])[0]/6)
             if pad:
-                stretchedcombine = await comb
+                stretchedcombine = comb
                 height = len(combine[0])
                 r = []
                 e = []
@@ -166,6 +199,11 @@ async def main():
 
     # os.rename('test',args.save)
 
+THREADED = False
+
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    if THREADED:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+    else:
+        main()
