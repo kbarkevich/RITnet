@@ -553,3 +553,12 @@ def get_pupil_parameters(data_to_fit):
     pupil_fit_error = my_ellipse(model_pupil.model).verify(pupilPts)
     r, c = np.where(data_to_fit == 2)
     return model_pupil.model
+
+#  Aayuush Ellipse area/circumference functions 
+
+def ellipse_circumference(major_radius,minor_radius):
+    return (np.pi * np.abs(3.0 * (major_radius + minor_radius) 
+                           -np.sqrt(10.0 * major_radius * minor_radius +
+                                    3.0 *(pow(major_radius, 2) + pow(minor_radius, 2)))))
+def ellipse_area(major_radius,minor_radius):
+    return (np.pi * major_radius * minor_radius)  

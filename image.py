@@ -60,7 +60,7 @@ def get_mask_from_path(path: str, model, useGpu=True):
     predict = get_predictions(output)
     return predict
     
-def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False):
+def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False):
     if useGpu:
         device=torch.device("cuda")
     else:
@@ -69,31 +69,36 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False):
     img = image.unsqueeze(1)
     data = img.to(device)   
     output = model(data)
-    predict = get_predictions(output)
+    rawpredict = get_predictions(output)
+    predict = rawpredict + 1
+    print(np.unique(predict[0].cpu().numpy()))
     pred_img = 1 - predict[0].cpu().numpy()/3.0
     if pupilOnly:
         pred_img = np.ceil(pred_img) * 0.5
+    if includeRawPredict:
+        return pred_img, rawpredict
     return pred_img
 
-def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False):
+def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False):
     img = process_PIL_image(pilimage)
-    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly)
+    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict)
     
-def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True):
+def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None):
     if useGpu:
         device=torch.device("cuda")
     else:
         device=torch.device("cpu")
-        
-    img = image.unsqueeze(1)
-    data = img.to(device)   
-    output = model(data)
-    predict = get_predictions(output)
+    
+    if predict is None:
+        img = image.unsqueeze(1)
+        data = img.to(device)   
+        output = model(data)
+        predict = get_predictions(output)
     return get_pupil_parameters(predict[0].numpy())
     
-def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True):
+def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None):
     img = process_PIL_image(pilimage)
-    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu)
+    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict)
     if res is not None:
         res[4] = res[4] * 180 / np.pi
     return res
@@ -136,7 +141,6 @@ def get_polsby_popper_score(perimeter, area):
         return (4 * np.pi * area) / (np.square(perimeter))
     except:
         return 0
-    
     
     
     

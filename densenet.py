@@ -31,7 +31,8 @@ class DenseNet2D_down_block(nn.Module):
         self.dropout1 = nn.Dropout(p=prob)
         self.dropout2 = nn.Dropout(p=prob)
         self.dropout3 = nn.Dropout(p=prob)
-        self.bn = torch.nn.BatchNorm2d(num_features=output_channels)
+#        self.bn = torch.nn.BatchNorm2d(num_features=output_channels)
+        self.ins= torch.nn.InstanceNorm2d(num_features=output_channels)
     
     def forward(self, x):
         if self.down_size != None:
@@ -49,7 +50,7 @@ class DenseNet2D_down_block(nn.Module):
             x22 = self.relu(self.conv22(self.conv21(x21)))
             x31 = torch.cat((x21,x22),dim=1)
             out = self.relu(self.conv32(self.conv31(x31)))
-        return self.bn(out)
+        return self.ins(out)#self.bn(out)
     
     
 class DenseNet2D_up_block_concat(nn.Module):
@@ -67,7 +68,7 @@ class DenseNet2D_up_block_concat(nn.Module):
         self.dropout2 = nn.Dropout(p=prob)
 
     def forward(self,prev_feature_map,x):
-        x = nn.functional.interpolate(x,scale_factor=self.up_stride,mode='nearest')
+        x = nn.functional.interpolate(x,scale_factor=self.up_stride,mode='bilinear')
         x = torch.cat((x,prev_feature_map),dim=1)
         if self.dropout:
             x1 = self.relu(self.dropout1(self.conv12(self.conv11(x))))
@@ -80,7 +81,7 @@ class DenseNet2D_up_block_concat(nn.Module):
         return out
     
 class DenseNet2D(nn.Module):
-    def __init__(self,in_channels=1,out_channels=4,channel_size=32,concat=True,dropout=False,prob=0):
+    def __init__(self,in_channels=1,out_channels=3,channel_size=32,concat=True,dropout=False,prob=0):
         super(DenseNet2D, self).__init__()
 
         self.down_block1 = DenseNet2D_down_block(input_channels=in_channels,output_channels=channel_size,
