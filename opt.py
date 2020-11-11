@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument('--lr', type=float,default= 1e-3,help='Learning rate')
     parser.add_argument('--save', help='save folder name',default='0try')
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
-    parser.add_argument('--load', type=str, default='ritnet_400400.pkl', help='load checkpoint file name')
+    parser.add_argument('--load', type=str, default='best_model.pkl', help='load checkpoint file name')
     parser.add_argument('--resume',  action='store_true', help='resume train from load chkpoint')
     parser.add_argument('--test', action='store_true', help='test only')
     parser.add_argument('--savemodel',action='store_true',help='checkpoint save the model')

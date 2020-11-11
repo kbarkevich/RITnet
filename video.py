@@ -24,7 +24,8 @@ filename = args.load
 if not os.path.exists(filename):
     print("model path not found !!!")
     exit(1)
-    
+MODEL_DICT_STR, CHANNELS = model_channel_dict[filename]
+
 # SETTINGS
 ROTATION = 0
 PAD = False
@@ -33,7 +34,7 @@ SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
-MODEL_DICT_STR, CHANNELS = model_channel_dict[filename]
+OVERLAP_MASK = True
 
 def main():
     if args.model not in model_dict:
@@ -73,12 +74,16 @@ def main():
     os.makedirs('video/pp-separation/0.'+str(9)+"-"+str(1)+".0",exist_ok=True)
     os.makedirs('video/pp-diff-separation/0.'+str(9)+"-"+str(1)+".0",exist_ok=True)
     os.makedirs('video/outputs/',exist_ok=True)
+    
+    mult = 2
+    if OVERLAP_MASK:
+        mult = 1
     if PAD and width == 192 and height == 192:
-        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*2+128),int(height*2)))
+        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult+(64*mult)),int(height*2)))
     elif PAD and width == 400 and height == 400:
-        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*2+266),int(height*2)))
+        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult+(133*mult)),int(height*2)))
     else:
-        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*2),int(height)))
+        videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult),int(height)))
     # maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
     while not video.isOpened():
         video = cv2.VideoCapture(args.video)
@@ -228,7 +233,10 @@ def main():
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
-            combine = np.hstack([img_orig,pred_img])
+            if OVERLAP_MASK:
+                combine = (img_orig + pred_img) / 2
+            else:
+                combine = np.hstack([img_orig,pred_img])
             #combine = get_stretched_combine(frame.copy(), tuple(frame.shape[1::-1])[0]/6)
             if pad:
                 stretchedcombine = comb
