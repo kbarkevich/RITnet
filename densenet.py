@@ -16,7 +16,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DenseNet2D_down_block(nn.Module):
-    def __init__(self,input_channels,output_channels,down_size,dropout=False,prob=0):
+    def __init__(self,input_channels,output_channels,down_size,dropout=False,prob=0,use_bn=True):
         super(DenseNet2D_down_block, self).__init__()
         self.conv1 = nn.Conv2d(input_channels,output_channels,kernel_size=(3,3),padding=(1,1))
         self.conv21 = nn.Conv2d(input_channels+output_channels,output_channels,kernel_size=(1,1),padding=(0,0))
@@ -31,8 +31,13 @@ class DenseNet2D_down_block(nn.Module):
         self.dropout1 = nn.Dropout(p=prob)
         self.dropout2 = nn.Dropout(p=prob)
         self.dropout3 = nn.Dropout(p=prob)
-#        self.bn = torch.nn.BatchNorm2d(num_features=output_channels)
-        self.ins= torch.nn.InstanceNorm2d(num_features=output_channels)
+        print(down_size)
+        if use_bn:
+            self.ins = None
+            self.bn = torch.nn.BatchNorm2d(num_features=output_channels)  # for best_model.pkl
+        else:
+            self.bn = None
+            self.ins= torch.nn.InstanceNorm2d(num_features=output_channels)  # for other
     
     def forward(self, x):
         if self.down_size != None:
@@ -50,7 +55,10 @@ class DenseNet2D_down_block(nn.Module):
             x22 = self.relu(self.conv22(self.conv21(x21)))
             x31 = torch.cat((x21,x22),dim=1)
             out = self.relu(self.conv32(self.conv31(x31)))
-        return self.ins(out)#self.bn(out)
+        if self.bn is not None:    
+            return self.bn(out)  # for best_model.pkl
+        else:
+            return self.ins(out)  # for other
     
     
 class DenseNet2D_up_block_concat(nn.Module):
@@ -81,19 +89,19 @@ class DenseNet2D_up_block_concat(nn.Module):
         return out
     
 class DenseNet2D(nn.Module):
-    def __init__(self,in_channels=1,out_channels=3,channel_size=32,concat=True,dropout=False,prob=0):
+    def __init__(self,in_channels=1,out_channels=4,channel_size=32,concat=True,dropout=False,prob=0):
         super(DenseNet2D, self).__init__()
 
         self.down_block1 = DenseNet2D_down_block(input_channels=in_channels,output_channels=channel_size,
-                                                 down_size=None,dropout=dropout,prob=prob)
+                                                 down_size=None,dropout=dropout,prob=prob,use_bn=out_channels==4)
         self.down_block2 = DenseNet2D_down_block(input_channels=channel_size,output_channels=channel_size,
-                                                 down_size=(2,2),dropout=dropout,prob=prob)
+                                                 down_size=(2,2),dropout=dropout,prob=prob,use_bn=out_channels==4)
         self.down_block3 = DenseNet2D_down_block(input_channels=channel_size,output_channels=channel_size,
-                                                 down_size=(2,2),dropout=dropout,prob=prob)
+                                                 down_size=(2,2),dropout=dropout,prob=prob,use_bn=out_channels==4)
         self.down_block4 = DenseNet2D_down_block(input_channels=channel_size,output_channels=channel_size,
-                                                 down_size=(2,2),dropout=dropout,prob=prob)
+                                                 down_size=(2,2),dropout=dropout,prob=prob,use_bn=out_channels==4)
         self.down_block5 = DenseNet2D_down_block(input_channels=channel_size,output_channels=channel_size,
-                                                 down_size=(2,2),dropout=dropout,prob=prob)
+                                                 down_size=(2,2),dropout=dropout,prob=prob,use_bn=out_channels==4)
 
         self.up_block1 = DenseNet2D_up_block_concat(skip_channels=channel_size,input_channels=channel_size,
                                                     output_channels=channel_size,up_stride=(2,2),dropout=dropout,prob=prob)

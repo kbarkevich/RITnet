@@ -60,7 +60,7 @@ def get_mask_from_path(path: str, model, useGpu=True):
     predict = get_predictions(output)
     return predict
     
-def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False):
+def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3):
     if useGpu:
         device=torch.device("cuda")
     else:
@@ -71,17 +71,17 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
     output = model(data)
     rawpredict = get_predictions(output)
     predict = rawpredict + 1
-    print(np.unique(predict[0].cpu().numpy()))
-    pred_img = 1 - predict[0].cpu().numpy()/3.0
+    # print(np.unique(predict[0].cpu().numpy()))
+    pred_img = 1 - predict[0].cpu().numpy()/channels
     if pupilOnly:
         pred_img = np.ceil(pred_img) * 0.5
     if includeRawPredict:
         return pred_img, rawpredict
     return pred_img
 
-def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False):
+def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3):
     img = process_PIL_image(pilimage)
-    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict)
+    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels)
     
 def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None):
     if useGpu:
@@ -103,20 +103,17 @@ def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None)
         res[4] = res[4] * 180 / np.pi
     return res
 
-def get_area_perimiters_from_mask(image):    
-    #set a thresh for iris
-    thresh = 0.9
+def get_area_perimiters_from_mask(image, iris_thresh=0.9, pupil_thresh=0.1):    
+
     #get threshold image
-    ret,thresh_img = cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY_INV)
+    ret,thresh_img = cv2.threshold(image, iris_thresh, 255, cv2.THRESH_BINARY_INV)
     thresh_img = thresh_img.astype(np.uint8)
     iris_area = np.sum(thresh_img != 0)
     #find iris contours
     iris_image, iris_contours, iris_hierarchy = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
-    #set a thresh for pupil
-    thresh = 0.1
+
     #get threshold image
-    ret,thresh_img = cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY_INV)
+    ret,thresh_img = cv2.threshold(image, pupil_thresh, 255, cv2.THRESH_BINARY_INV)
     thresh_img = thresh_img.astype(np.uint8)
     pupil_area = np.sum(thresh_img != 0)
     #find pupil contours
@@ -133,6 +130,9 @@ def get_area_perimiters_from_mask(image):
         pupil_perimeter = pupil_perimeter + peri
     
     #print(f'Perimeter = {int(round(perimeter,0))} pixels')
+    
+    # print("IRIS PERIMETER: " + str(iris_perimeter))
+    # print("PUPIL PERIMETER: " + str(pupil_perimeter))
 
     return iris_perimeter, pupil_perimeter, iris_area, pupil_area
 

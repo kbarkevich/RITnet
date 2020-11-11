@@ -9,25 +9,33 @@ import numpy as np
 import os
 import cv2
 from opt import parse_args
-from models import model_dict
+from models import model_dict, model_channel_dict
 import matplotlib.pyplot as plt
 from image import get_mask_from_PIL_image, process_PIL_image, get_area_perimiters_from_mask, get_polsby_popper_score, get_pupil_ellipse_from_PIL_image
 import asyncio
 import math
+import datetime
 
 from helperfunctions import get_pupil_parameters, ellipse_area, ellipse_circumference
 
-
+# INITIAL LOADING OF ARGS
+args = parse_args()
+filename = args.load
+if not os.path.exists(filename):
+    print("model path not found !!!")
+    exit(1)
+    
+# SETTINGS
 ROTATION = 0
 PAD = False
 THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
-SAVE_SEPARATED_PP_FRAMES = True
-
+SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
+MODEL_DICT_STR, CHANNELS = model_channel_dict[filename]
 
 def main():
-    args = parse_args()
-   
     if args.model not in model_dict:
         print ("Model not found !!!")
         print ("valid models are:",list(model_dict.keys()))
@@ -38,12 +46,9 @@ def main():
     else:
         device=torch.device("cpu")
         
-    model = model_dict[args.model]
+    model = model_dict[MODEL_DICT_STR]
     model  = model.to(device)
-    filename = args.load
-    if not os.path.exists(filename):
-        print("model path not found !!!")
-        exit(1)
+    
         
     model.load_state_dict(torch.load(filename))
     model = model.to(device)
@@ -112,18 +117,21 @@ def main():
         stretchedcombine = np.hstack([img_orig,get_mask_from_PIL_image(frame1, model, True, False),pred_img])
         return stretchedcombine
     
+    max_frames = video.get(cv2.CAP_PROP_FRAME_COUNT)
     pp_x = []
     pp_iris_y = []
     pp_pupil_y = []
     pp_pupil_diff_y = []
+    seconds_arr = []
     while True:
+        seconds_start = datetime.datetime.now()  # Start timer
         flag, frame = video.read()
         if flag:
             count += 1
             pp_x.append(count)
             # cv2.imshow('video', frame)
-            # cv2.imshow('output', output[0][0].cpu().detach().numpy()/3.0)
-            # cv2.imshow('mask', predict[0].cpu().numpy()/3.0)
+            # cv2.imshow('output', output[0][0].cpu().detach().numpy()/CHANNELS)
+            # cv2.imshow('mask', predict[0].cpu().numpy()/CHANNELS)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             
             pad = False
@@ -143,67 +151,78 @@ def main():
             M = cv2.getRotationMatrix2D(center, ROTATION, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
                 
-            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True)
+            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS)
             
-            # Scoring step 1: Get area/perimeter directly from mask
-            iris_perimeter, pupil_perimeter, iris_area, pupil_area = get_area_perimiters_from_mask(pred_img)
-            # Scoring step 2: Get pupil & iris scores from area/perimeter
-            pp_iris = get_polsby_popper_score(iris_perimeter, iris_area)
-            pp_pupil = get_polsby_popper_score(pupil_perimeter, pupil_area)
-            pp_pupil_diff = 0
-            # Scoring step 3: Get ellipse from mask
-            pupil_ellipse = get_pupil_parameters(1-predict[0].numpy()/3)
-            if pupil_ellipse is not None:
-                major_axis = pupil_ellipse[2]
-                minor_axis = pupil_ellipse[3]
-                pupil_ellipse_area = ellipse_area(major_axis, minor_axis)
-                pupil_ellipse_perimeter = ellipse_circumference(major_axis, minor_axis)
-                # Scoring step 4: Get pupil ellipse area/perimeter
-                pp_pupil_ellipse = get_polsby_popper_score(pupil_ellipse_perimeter, pupil_ellipse_area)
+            # Calculate PP score data only if PP score is used
+            if SAVE_SEPARATED_PP_FRAMES or SHOW_PP_OVERLAY or SHOW_PP_GRAPH:
+                # Scoring step 1: Get area/perimeter directly from mask
+                if CHANNELS == 4:
+                    iris_perimeter, pupil_perimeter, iris_area, pupil_area = get_area_perimiters_from_mask(pred_img, iris_thresh=0.6, pupil_thresh=0.1)
+                else:
+                    iris_perimeter, pupil_perimeter, iris_area, pupil_area = get_area_perimiters_from_mask(pred_img)
+                # Scoring step 2: Get pupil & iris scores from area/perimeter
+                pp_iris = get_polsby_popper_score(iris_perimeter, iris_area)
+                pp_pupil = get_polsby_popper_score(pupil_perimeter, pupil_area)
+                pp_pupil_diff = 0
+                # Scoring step 3: Get ellipse from mask
+                params_get = predict[0].numpy()/CHANNELS
+                params_get[params_get < (CHANNELS-1)/CHANNELS] = 0
+                params_get[params_get >= (CHANNELS-1)/CHANNELS] = 0.75
+                pupil_ellipse = get_pupil_parameters(1-params_get)
+                if pupil_ellipse is not None:
+                    major_axis = pupil_ellipse[2]
+                    minor_axis = pupil_ellipse[3]
+                    pupil_ellipse_area = ellipse_area(major_axis, minor_axis)
+                    print(pupil_ellipse_area)
+                    pupil_ellipse_perimeter = ellipse_circumference(major_axis, minor_axis)
+                    # Scoring step 4: Get pupil ellipse area/perimeter
+                    pp_pupil_ellipse = get_polsby_popper_score(pupil_ellipse_perimeter, pupil_ellipse_area)
+                    if math.isnan(pp_pupil) or pp_pupil >= 1 or pp_pupil <= 0:
+                        pp_pupil_diff = 0
+                    else:
+                        pp_pupil_diff = abs(pp_pupil - pp_pupil_ellipse)
+                else:
+                    pp_pupil = 0
                 if math.isnan(pp_pupil) or pp_pupil >= 1 or pp_pupil <= 0:
-                    pp_pupil_diff = 0
-                else:
-                    pp_pupil_diff = abs(pp_pupil - pp_pupil_ellipse)
-            else:
-                pp_pupil = 0
-            if math.isnan(pp_pupil) or pp_pupil >= 1 or pp_pupil <= 0:
-                pp_pupil = 0
-                
-            if math.isnan(pp_iris) or pp_iris >= 1 or pp_iris <= 0:
-                if len(pp_iris_y) > 0:
-                    pp_iris = pp_iris_y[len(pp_iris_y)-1]
-                else:
-                    pp_iris = 0
-
-            pp_iris_y.append(pp_iris)
-            pp_pupil_y.append(pp_pupil)
-            pp_pupil_diff_y.append(pp_pupil_diff)
+                    pp_pupil = 0
+                    
+                if math.isnan(pp_iris) or pp_iris >= 1 or pp_iris <= 0:
+                    if len(pp_iris_y) > 0:
+                        pp_iris = pp_iris_y[len(pp_iris_y)-1]
+                    else:
+                        pp_iris = 0
+    
+                pp_iris_y.append(pp_iris)
+                pp_pupil_y.append(pp_pupil)
+                pp_pupil_diff_y.append(pp_pupil_diff)
             
-            plt.title("Pupil Polsby-Popper Score")
-            plt.xlabel("frame")
-            plt.ylabel("score")
-            plt.plot(pp_x, pp_pupil_y, color='olive', label="Image Score")
-            plt.plot(pp_x, pp_pupil_diff_y, color='blue', label="Difference Image Score, Ellipse Score")
-            plt.ylim(bottom=0, top=1)
-            plt.legend()
-            plt.show()
+            if SHOW_PP_GRAPH:
+                plt.title("Pupil Polsby-Popper Score")
+                plt.xlabel("frame")
+                plt.ylabel("score")
+                plt.plot(pp_x, pp_pupil_y, color='olive', label="Image Score")
+                plt.plot(pp_x, pp_pupil_diff_y, color='blue', label="Difference Image Score, Ellipse Score")
+                plt.ylim(bottom=0, top=1)
+                plt.legend()
+                plt.show()
             
             # Add score overlay to image
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            orgPP = (10, 15)
-            orgPPDiff = (10, 35)
-            fontScale = 0.5
-            colorWhite = (255, 255, 255)
-            colorBlack= (0, 0, 0)
-            thickness = 2
-            frame = cv2.putText(frame, "PP:     "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
-                                colorBlack, thickness*2, cv2.LINE_AA)
-            frame = cv2.putText(frame, "PP:     "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
-                                colorWhite, thickness, cv2.LINE_AA)
-            frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
-                                colorBlack, thickness*2, cv2.LINE_AA)
-            frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
-                                colorWhite, thickness, cv2.LINE_AA)
+            if SHOW_PP_OVERLAY:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                orgPP = (10, 15)
+                orgPPDiff = (10, 35)
+                fontScale = 0.5
+                colorWhite = (255, 255, 255)
+                colorBlack= (0, 0, 0)
+                thickness = 2
+                frame = cv2.putText(frame, "PP:     "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
+                                    colorBlack, thickness*2, cv2.LINE_AA)
+                frame = cv2.putText(frame, "PP:     "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
+                                    colorWhite, thickness, cv2.LINE_AA)
+                frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
+                                    colorBlack, thickness*2, cv2.LINE_AA)
+                frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
+                                    colorWhite, thickness, cv2.LINE_AA)
             
             
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
@@ -223,25 +242,36 @@ def main():
                 
                 combine = np.append(combine, r, axis=1)
                 combine = np.vstack([combine, stretchedcombine])
-            
             cv2.imshow('RITnet', combine)
             if SEPARATE_ORIGINAL_VIDEO:
                 cv2.imshow('Original', img_orig)
             if SAVE_SEPARATED_PP_FRAMES:
                 pp_folder = "{}-{}".format(str(round(int(math.floor(pp_pupil * 10.0)) / 10, 1)), str(round(int(math.floor(pp_pupil * 10.0)) / 10 + .10, 1)))
                 pp_diff_folder = "{}-{}".format(str(round(int(math.floor(pp_pupil_diff * 10.0)) / 10, 1)), str(round(int(math.floor(pp_pupil_diff * 10.0)) / 10 + .10, 1)))
-                print(pp_folder)
-                print(pp_diff_folder)
                 plt.imsave('video/pp-separation/{}/{}.png'.format(pp_folder, str(count)), combine)
                 plt.imsave('video/pp-diff-separation/{}/{}.png'.format(pp_diff_folder, str(count)), combine)
             pred_img_3=np.zeros((pred_img.shape[0],pred_img.shape[1],3))
             pred_img_3[:,:,0]=pred_img
             pred_img_3[:,:,1]=pred_img
             pred_img_3[:,:,2]=pred_img
+
             plt.imsave('video/images/{}.png'.format(count),np.uint8(pred_img_3 * 255))
             # maskvideowriter.write((pred_img * 255).astype('uint8'))  # write to mask video output
             videowriter.write((combine * 255).astype('uint8')) # write to video output
-            print(str(pos_frame)+" frames")
+            
+            # Calculate time remaining using last (up to) 10 frames
+            seconds_end = datetime.datetime.now()
+            seconds_diff = seconds_end - seconds_start
+            if len(seconds_arr) == 25:
+                seconds_arr.pop(0)
+            seconds_arr.append(seconds_diff.total_seconds())
+            avg = 0
+            for i in seconds_arr:
+                avg += i
+            avg = avg / len(seconds_arr)
+            seconds_remaining = avg * (max_frames - pos_frame)
+            time_remaining = "{}:{}:{}".format("{0:0=2d}".format(int(seconds_remaining/60/60)),"{0:0=2d}".format(int(seconds_remaining/60%60)),"{0:0=2d}".format(int(seconds_remaining%60)))
+            print(str(pos_frame)+"/"+str(max_frames)+" frames  (ETA: " + time_remaining+")")
         else:
             # Wait for next frame
             video.set(cv2.CAP_PROP_POS_FRAMES, pos_frame-1)
