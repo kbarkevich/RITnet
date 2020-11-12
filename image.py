@@ -17,6 +17,7 @@ import cv2
 from utils import get_predictions
 from PIL import Image
 from helperfunctions import get_pupil_parameters
+from skimage import io, measure
 
 def init_model(devicestr="cuda"):
     device = torch.device(devicestr)
@@ -60,7 +61,7 @@ def get_mask_from_path(path: str, model, useGpu=True):
     predict = get_predictions(output)
     return predict
     
-def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3):
+def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False):
     if useGpu:
         device=torch.device("cuda")
     else:
@@ -73,15 +74,37 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
     predict = rawpredict + 1
     # print(np.unique(predict[0].cpu().numpy()))
     pred_img = 1 - predict[0].cpu().numpy()/channels
+    
+    # trim pupil if asked to
+    if trim_pupil:
+        newimg = np.invert(pred_img>0)
+        labeled_img = measure.label(newimg)
+        labels = np.unique(labeled_img)
+        newimg = np.zeros((newimg.shape[0],newimg.shape[1]))
+        old_sum = 0
+        old_label = None
+        for label in (y for y in labels if y != 0):
+            if np.sum(labeled_img==label) > old_sum:
+                old_sum = np.sum(labeled_img==label)
+                old_label = label
+        if old_label is not None:
+            newimg = newimg + (labeled_img == old_label)
+        newimg[newimg == 0] = 2
+        newimg[newimg == 1] = 0
+        newimg[newimg == 2] = 1
+        pred_img[pred_img == 0] = 1-(1/channels)
+        pred_img[newimg == 0] = 0
+        
+    print(np.unique(pred_img))
     if pupilOnly:
         pred_img = np.ceil(pred_img) * 0.5
     if includeRawPredict:
         return pred_img, rawpredict
     return pred_img
 
-def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3):
+def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False):
     img = process_PIL_image(pilimage)
-    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels)
+    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil)
     
 def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None):
     if useGpu:

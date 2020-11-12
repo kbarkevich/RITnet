@@ -34,7 +34,8 @@ SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
-OVERLAP_MASK = True
+OVERLAP_MASK = False
+KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 
 def main():
     if args.model not in model_dict:
@@ -156,7 +157,7 @@ def main():
             M = cv2.getRotationMatrix2D(center, ROTATION, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
                 
-            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS)
+            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY)
             
             # Calculate PP score data only if PP score is used
             if SAVE_SEPARATED_PP_FRAMES or SHOW_PP_OVERLAY or SHOW_PP_GRAPH:
