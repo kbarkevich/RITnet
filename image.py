@@ -117,7 +117,9 @@ def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None):
         data = img.to(device)   
         output = model(data)
         predict = get_predictions(output)
-    return get_pupil_parameters(predict[0].numpy())
+        pred_img = predict[0].numpy()
+        
+    return get_pupil_parameters(pred_img)
     
 def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None):
     img = process_PIL_image(pilimage)

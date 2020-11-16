@@ -15,6 +15,7 @@ from image import get_mask_from_PIL_image, process_PIL_image, get_area_perimiter
 import asyncio
 import math
 import datetime
+import json
 
 from helperfunctions import get_pupil_parameters, ellipse_area, ellipse_circumference
 
@@ -34,6 +35,7 @@ SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
+OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 
@@ -128,6 +130,7 @@ def main():
     pp_iris_y = []
     pp_pupil_y = []
     pp_pupil_diff_y = []
+    pp_data = {}
     seconds_arr = []
     while True:
         seconds_start = datetime.datetime.now()  # Start timer
@@ -160,7 +163,7 @@ def main():
             pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY)
             
             # Calculate PP score data only if PP score is used
-            if SAVE_SEPARATED_PP_FRAMES or SHOW_PP_OVERLAY or SHOW_PP_GRAPH:
+            if SAVE_SEPARATED_PP_FRAMES or SHOW_PP_OVERLAY or SHOW_PP_GRAPH or OUTPUT_PP_DATA_TO_JSON:
                 # Scoring step 1: Get area/perimeter directly from mask
                 if CHANNELS == 4:
                     iris_perimeter, pupil_perimeter, iris_area, pupil_area = get_area_perimiters_from_mask(pred_img, iris_thresh=0.6, pupil_thresh=0.1)
@@ -201,6 +204,11 @@ def main():
                 pp_iris_y.append(pp_iris)
                 pp_pupil_y.append(pp_pupil)
                 pp_pupil_diff_y.append(pp_pupil_diff)
+                if OUTPUT_PP_DATA_TO_JSON:
+                    pp_data[count] = {
+                            'pp': pp_pupil,
+                            'pp_diff': pp_pupil_diff
+                    }
             
             if SHOW_PP_GRAPH:
                 plt.title("Pupil Polsby-Popper Score")
@@ -299,6 +307,8 @@ def main():
             videowriter.release()
             cv2.destroyAllWindows()
             break
+    with open('pp_data.txt', 'w') as outfile:
+        json.dump(pp_data, outfile, indent=4)
     os.system('cd "'+os.path.dirname(os.path.realpath(__file__))+'" & ffmpeg -r '+str(fps)+' -i ".\\video\\images\\%d.png" -c:v mpeg4 -vcodec libx264 -r '+str(fps)+' ".\\video\\outputs\\mask.mp4"')
             
 
