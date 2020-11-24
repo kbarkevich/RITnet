@@ -95,7 +95,7 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
         pred_img[pred_img == 0] = 1-(1/channels)
         pred_img[newimg == 0] = 0
         
-    print(np.unique(pred_img))
+    #print(np.unique(pred_img))
     if pupilOnly:
         pred_img = np.ceil(pred_img) * 0.5
     if includeRawPredict:

@@ -34,10 +34,27 @@ THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
-SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_GRAPH = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
+
+def draw_ellipse(
+        img, center, axes, angle,
+        startAngle, endAngle, color,
+        thickness=3, lineType=cv2.LINE_AA, shift=10):
+    center = (
+        int(round(center[0] * 2**shift)),
+        int(round(center[1] * 2**shift))
+    )
+    axes = (
+        int(round(axes[0] * 2**shift)),
+        int(round(axes[1] * 2**shift))
+    )
+    return cv2.ellipse(
+        img, center, axes, angle,
+        startAngle, endAngle, color,
+        thickness, lineType, shift)
 
 def main():
     if args.model not in model_dict:
@@ -130,6 +147,7 @@ def main():
     pp_iris_y = []
     pp_pupil_y = []
     pp_pupil_diff_y = []
+    iou_y = []
     pp_data = {}
     seconds_arr = []
     while True:
@@ -162,6 +180,8 @@ def main():
                 
             pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY)
             
+            IOU = 0
+            
             # Calculate PP score data only if PP score is used
             if SAVE_SEPARATED_PP_FRAMES or SHOW_PP_OVERLAY or SHOW_PP_GRAPH or OUTPUT_PP_DATA_TO_JSON:
                 # Scoring step 1: Get area/perimeter directly from mask
@@ -178,11 +198,38 @@ def main():
                 params_get[params_get < (CHANNELS-1)/CHANNELS] = 0
                 params_get[params_get >= (CHANNELS-1)/CHANNELS] = 0.75
                 pupil_ellipse = get_pupil_parameters(1-params_get)
-                if pupil_ellipse is not None:
+                
+              
+                
+                if pupil_ellipse is not None and pupil_ellipse[0] >= -0:
+                    center_coordinates = (int(pupil_ellipse[0]), int(pupil_ellipse[1]))
+                    axesLength = (int(pupil_ellipse[2]), int(pupil_ellipse[3]))
+                    angle = int(pupil_ellipse[4]*360)
+                    startAngle = 0
+                    endAngle = 360
+                    color = (0, 0, 255)
+                    
+                    ellimage = np.zeros((int(width), int(height), 3))
+                    ellimage = draw_ellipse(ellimage, center_coordinates, axesLength,
+                                            angle, startAngle, endAngle, color, -1)
+                    
+                    image_copy = np.zeros((int(width), int(height), 3), dtype = "uint8")
+                    
+                    pupilimage = np.where(pred_img == 0)
+
+                    image_copy[pupilimage] =  [0, 255, 0]
+                    ellimage = ellimage + image_copy
+                    cv2.imshow("ELLIPSE", ellimage)
+                    
+                    intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2))
+                    union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2))
+                    if union != 0:
+                        IOU = intersection/union
+                    
                     major_axis = pupil_ellipse[2]
                     minor_axis = pupil_ellipse[3]
                     pupil_ellipse_area = ellipse_area(major_axis, minor_axis)
-                    print(pupil_ellipse_area)
+                    # print(pupil_ellipse_area)
                     pupil_ellipse_perimeter = ellipse_circumference(major_axis, minor_axis)
                     # Scoring step 4: Get pupil ellipse area/perimeter
                     pp_pupil_ellipse = get_polsby_popper_score(pupil_ellipse_perimeter, pupil_ellipse_area)
@@ -204,10 +251,12 @@ def main():
                 pp_iris_y.append(pp_iris)
                 pp_pupil_y.append(pp_pupil)
                 pp_pupil_diff_y.append(pp_pupil_diff)
+                iou_y.append(IOU)
                 if OUTPUT_PP_DATA_TO_JSON:
                     pp_data[count] = {
                             'pp': pp_pupil,
-                            'pp_diff': pp_pupil_diff
+                            'pp_diff': pp_pupil_diff,
+                            'IOU': IOU
                     }
             
             if SHOW_PP_GRAPH:
@@ -216,6 +265,7 @@ def main():
                 plt.ylabel("score")
                 plt.plot(pp_x, pp_pupil_y, color='olive', label="Image Score")
                 plt.plot(pp_x, pp_pupil_diff_y, color='blue', label="Difference Image Score, Ellipse Score")
+                plt.plot(pp_x, iou_y, color='red', label="IOU Pupil Ellipse Fit & Pupil Mask")
                 plt.ylim(bottom=0, top=1)
                 plt.legend()
                 plt.show()
@@ -225,6 +275,7 @@ def main():
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 orgPP = (10, 15)
                 orgPPDiff = (10, 35)
+                orgIouDiff = (10, 55)
                 fontScale = 0.5
                 colorWhite = (255, 255, 255)
                 colorBlack= (0, 0, 0)
@@ -236,6 +287,10 @@ def main():
                 frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
                                     colorBlack, thickness*2, cv2.LINE_AA)
                 frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
+                                    colorWhite, thickness, cv2.LINE_AA)
+                frame = cv2.putText(frame, "IOU:    "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
+                                    colorBlack, thickness*2, cv2.LINE_AA)
+                frame = cv2.putText(frame, "IOU:    "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
                                     colorWhite, thickness, cv2.LINE_AA)
             
             
