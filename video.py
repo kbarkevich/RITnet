@@ -34,7 +34,7 @@ THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
-SHOW_PP_GRAPH = True  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
@@ -155,6 +155,8 @@ def main():
         flag, frame = video.read()
         if flag:
             count += 1
+            if count < 500:
+                continue
             pp_x.append(count)
             # cv2.imshow('video', frame)
             # cv2.imshow('output', output[0][0].cpu().detach().numpy()/CHANNELS)
@@ -203,17 +205,19 @@ def main():
                 
                 if pupil_ellipse is not None and pupil_ellipse[0] >= -0:
                     center_coordinates = (int(pupil_ellipse[0]), int(pupil_ellipse[1]))
+                    #axesLength = (int(pupil_ellipse[2])+2, int(pupil_ellipse[3])+2)
                     axesLength = (int(pupil_ellipse[2]), int(pupil_ellipse[3]))
-                    angle = int(pupil_ellipse[4]*360)
+                    angle = pupil_ellipse[4]*180/(np.pi)
+                    print("angle: ",angle)
                     startAngle = 0
                     endAngle = 360
                     color = (0, 0, 255)
                     
-                    ellimage = np.zeros((int(width), int(height), 3))
+                    ellimage = np.zeros((int(height), int(width), 3))
                     ellimage = draw_ellipse(ellimage, center_coordinates, axesLength,
                                             angle, startAngle, endAngle, color, -1)
                     
-                    image_copy = np.zeros((int(width), int(height), 3), dtype = "uint8")
+                    image_copy = np.zeros((int(height), int(width), 3), dtype = "uint8")
                     
                     pupilimage = np.where(pred_img == 0)
 
