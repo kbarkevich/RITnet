@@ -36,7 +36,7 @@ SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which 
 SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
-OVERLAP_MASK = False
+OVERLAP_MASK = True
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 
 def draw_ellipse(
@@ -97,7 +97,7 @@ def main():
     
     mult = 2
     if OVERLAP_MASK:
-        mult = 1
+        mult = 3
     if PAD and width == 192 and height == 192:
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult+(64*mult)),int(height*2)))
     elif PAD and width == 400 and height == 400:
@@ -223,7 +223,7 @@ def main():
 
                     image_copy[pupilimage] =  [0, 255, 0]
                     ellimage = ellimage + image_copy
-                    cv2.imshow("ELLIPSE", ellimage)
+                    # cv2.imshow("ELLIPSE", ellimage)
                     
                     intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2))
                     union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2))
@@ -302,7 +302,7 @@ def main():
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
             if OVERLAP_MASK:
-                combine = (img_orig + pred_img) / 2
+                combine = np.hstack([img_orig, (img_orig + pred_img) / 2, pred_img])
             else:
                 combine = np.hstack([img_orig,pred_img])
             #combine = get_stretched_combine(frame.copy(), tuple(frame.shape[1::-1])[0]/6)
