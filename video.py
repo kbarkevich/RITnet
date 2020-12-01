@@ -38,6 +38,7 @@ SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
+START_FRAME = 0
 
 def draw_ellipse(
         img, center, axes, angle,
@@ -155,7 +156,7 @@ def main():
         flag, frame = video.read()
         if flag:
             count += 1
-            if count < 500:
+            if count < START_FRAME:
                 continue
             pp_x.append(count)
             # cv2.imshow('video', frame)
@@ -260,7 +261,7 @@ def main():
                     pp_data[count] = {
                             'pp': pp_pupil,
                             'pp_diff': pp_pupil_diff,
-                            'IOU': IOU
+                            'shape_conf': IOU
                     }
             
             if SHOW_PP_GRAPH:
@@ -284,17 +285,17 @@ def main():
                 colorWhite = (255, 255, 255)
                 colorBlack= (0, 0, 0)
                 thickness = 2
-                frame = cv2.putText(frame, "PP:     "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
+                frame = cv2.putText(frame, "PP:           "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
                                     colorBlack, thickness*2, cv2.LINE_AA)
-                frame = cv2.putText(frame, "PP:     "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
+                frame = cv2.putText(frame, "PP:           "+"{:.4f}".format(pp_pupil), orgPP, font, fontScale,
                                     colorWhite, thickness, cv2.LINE_AA)
-                frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
+                frame = cv2.putText(frame, "PP Diff:       "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
                                     colorBlack, thickness*2, cv2.LINE_AA)
-                frame = cv2.putText(frame, "PP Diff: "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
+                frame = cv2.putText(frame, "PP Diff:       "+"{:.4f}".format(pp_pupil_diff), orgPPDiff, font, fontScale,
                                     colorWhite, thickness, cv2.LINE_AA)
-                frame = cv2.putText(frame, "IOU:    "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
+                frame = cv2.putText(frame, "Shape Conf.:  "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
                                     colorBlack, thickness*2, cv2.LINE_AA)
-                frame = cv2.putText(frame, "IOU:    "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
+                frame = cv2.putText(frame, "Shape Conf.:  "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
                                     colorWhite, thickness, cv2.LINE_AA)
             
             
