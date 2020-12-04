@@ -16,5 +16,5 @@ model_dict['densenet_3ch'] = DenseNet2D(dropout=True,prob=0.2,out_channels=3)
 
 model_channel_dict = {}
 model_channel_dict['best_model.pkl'] = ('densenet_4ch', 4)
-model_channel_dict['ritnet_pupil.pkl'] = ('densenet_3ch', 3)
+model_channel_dict['ritnet_pupil.pkl'] = ('densenet_4ch', 4)
 model_channel_dict['ritnet_400400.pkl'] = ('densenet_3ch', 3)

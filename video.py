@@ -16,6 +16,7 @@ import asyncio
 import math
 import datetime
 import json
+from graph import print_stats
 
 from helperfunctions import get_pupil_parameters, ellipse_area, ellipse_circumference
 
@@ -52,10 +53,14 @@ def draw_ellipse(
         int(round(axes[0] * 2**shift)),
         int(round(axes[1] * 2**shift))
     )
-    return cv2.ellipse(
-        img, center, axes, angle,
-        startAngle, endAngle, color,
-        thickness, lineType, shift)
+    try:
+        return cv2.ellipse(
+            img, center, axes, angle,
+            startAngle, endAngle, color,
+            thickness, lineType, shift)
+    except:
+        return None
+
 
 def main():
     if args.model not in model_dict:
@@ -70,7 +75,6 @@ def main():
         
     model = model_dict[MODEL_DICT_STR]
     model  = model.to(device)
-    
         
     model.load_state_dict(torch.load(filename))
     model = model.to(device)
@@ -214,7 +218,7 @@ def main():
                     endAngle = 360
                     color = (0, 0, 255)
                     
-                    ellimage = np.zeros((int(height), int(width), 3))
+                    ellimage = np.zeros((int(height), int(width), 3), dtype="uint8")
                     ellimage = draw_ellipse(ellimage, center_coordinates, axesLength,
                                             angle, startAngle, endAngle, color, -1)
                     
@@ -223,11 +227,11 @@ def main():
                     pupilimage = np.where(pred_img == 0)
 
                     image_copy[pupilimage] =  [0, 255, 0]
-                    ellimage = ellimage + image_copy
+                    ellimage = (ellimage + image_copy) if ellimage is not None else ellimage
                     # cv2.imshow("ELLIPSE", ellimage)
                     
-                    intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2))
-                    union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2))
+                    intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
+                    union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2)) if ellimage is not None else 0
                     if union != 0:
                         IOU = intersection/union
                     
@@ -367,10 +371,13 @@ def main():
             videowriter.release()
             cv2.destroyAllWindows()
             break
-    with open('pp_data.txt', 'w') as outfile:
-        json.dump(pp_data, outfile, indent=4)
+    if OUTPUT_PP_DATA_TO_JSON:
+        with open('pp_data.txt', 'w') as outfile:
+            json.dump(pp_data, outfile, indent=4)
+        print_stats(file_name='pp_data.txt', spacing=1, frame_range=None, ignore_zeros=True)
+    
     os.system('cd "'+os.path.dirname(os.path.realpath(__file__))+'" & ffmpeg -r '+str(fps)+' -i ".\\video\\images\\%d.png" -c:v mpeg4 -vcodec libx264 -r '+str(fps)+' ".\\video\\outputs\\mask.mp4"')
-            
+    
 
     # os.rename('test',args.save)
 
