@@ -8,6 +8,7 @@ Created on Tue Dec  1 18:47:52 2020
 import matplotlib.pyplot as plt
 import json
 from os import path
+import numpy as np
 
 
 FILE_NAME = "pp_data.txt"
@@ -45,6 +46,54 @@ def print_stats(file_name=FILE_NAME, spacing=SPACING, frame_range=RANGE, ignore_
         plt.legend()
         plt.show()
         
+        pp_first_quartile = sum((val < .25) for val in y_pp) / len(y_pp) * 100
+        pp_diff_first_quartile = sum((val >= .75) for val in y_pp_diff) / len(y_pp_diff) * 100
+        shape_conf_first_quartile = sum((val < .25) for val in y_shape_conf) / len(y_shape_conf) * 100
+        
+        pp_second_quartile = sum((val >= .25 and val < .5) for val in y_pp) / len(y_pp) * 100
+        pp_diff_second_quartile = sum((val < .75 and val >= .5) for val in y_pp_diff) / len(y_pp_diff) * 100
+        shape_conf_second_quartile = sum((val >= .25 and val < .5) for val in y_shape_conf) / len(y_shape_conf) * 100
+        
+        pp_third_quartile = sum((val >= .5 and val < .75) for val in y_pp) / len(y_pp) * 100
+        pp_diff_third_quartile = sum((val < .5 and val >= .25) for val in y_pp_diff) / len(y_pp_diff) * 100
+        shape_conf_third_quartile = sum((val >= .5 and val < .75) for val in y_shape_conf) / len(y_shape_conf) * 100
+        
+        pp_fourth_quartile = sum((val >= .75) for val in y_pp) / len(y_pp) * 100
+        pp_diff_fourth_quartile = sum((val < .25) for val in y_pp_diff) / len(y_pp_diff) * 100
+        shape_conf_fourth_quartile = sum((val >= .75) for val in y_shape_conf) / len(y_shape_conf) * 100
+        
+        pp_quartiles = [pp_first_quartile, pp_second_quartile, pp_third_quartile, pp_fourth_quartile]
+        pp_diff_quartiles = [pp_diff_first_quartile, pp_diff_second_quartile, pp_diff_third_quartile, pp_diff_fourth_quartile]
+        shape_conf_quartiles = [shape_conf_first_quartile, shape_conf_second_quartile, shape_conf_third_quartile, shape_conf_fourth_quartile]
+        data = [pp_quartiles, pp_diff_quartiles, shape_conf_quartiles]
+        X = np.arange(4)
+        
+        fig = plt.figure()
+        ax = fig.add_axes([0,0,1,1])
+        b1 = ax.bar(X + 0.00, data[0], color = 'b', width = 0.25)
+        b2 = ax.bar(X + 0.25, data[1], color = 'g', width = 0.25)
+        b3 = ax.bar(X + 0.50, data[2], color = 'r', width = 0.25)
+        ax.set_ylabel('Percentage (%) in Quarter')
+        ax.set_title("Image Pupil Scoring by Quartile (every " + str(spacing) + " pixel[s])")
+        ax.legend(labels=['PP Score', 'PP Diff Score', 'Pupil Shape Confidence'])
+        plt.xticks([r + .25 for r in range(4)], 
+           ['1st Quartile', '2nd Quartile', '3rd Quartile', '4th Quartile'])
+        
+        def autolabel(rects):
+            for rect in rects:
+                height = rect.get_height()
+                ax.annotate('{:.1f}'.format(height),
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom')
+
+        autolabel(b1)
+        autolabel(b2)
+        autolabel(b3)
+        plt.show()
+        
+            
     y_pp_copy = y_pp.copy()
     y_pp_diff_copy = y_pp_diff.copy()
     y_shape_conf_copy = y_shape_conf.copy()

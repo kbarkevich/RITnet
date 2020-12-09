@@ -40,6 +40,7 @@ OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which sl
 OVERLAP_MASK = True
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 START_FRAME = 0
+ISOLATE_FRAMES = [606,808,14152,17751,23714]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
 def draw_ellipse(
         img, center, axes, angle,
@@ -99,6 +100,7 @@ def main():
     os.makedirs('video/pp-separation/0.'+str(9)+"-"+str(1)+".0",exist_ok=True)
     os.makedirs('video/pp-diff-separation/0.'+str(9)+"-"+str(1)+".0",exist_ok=True)
     os.makedirs('video/outputs/',exist_ok=True)
+    os.makedirs('video/isolated/', exist_ok=True)
     
     mult = 2
     if OVERLAP_MASK:
@@ -331,6 +333,8 @@ def main():
                 pp_diff_folder = "{}-{}".format(str(round(int(math.floor(pp_pupil_diff * 10.0)) / 10, 1)), str(round(int(math.floor(pp_pupil_diff * 10.0)) / 10 + .10, 1)))
                 plt.imsave('video/pp-separation/{}/{}.png'.format(pp_folder, str(count)), combine)
                 plt.imsave('video/pp-diff-separation/{}/{}.png'.format(pp_diff_folder, str(count)), combine)
+                if count in ISOLATE_FRAMES:
+                    plt.imsave('video/isolated/{}.png'.format(str(count)), combine)
             pred_img_3=np.zeros((pred_img.shape[0],pred_img.shape[1],3))
             pred_img_3[:,:,0]=pred_img
             pred_img_3[:,:,1]=pred_img
