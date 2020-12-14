@@ -19,6 +19,9 @@ import json
 from graph import print_stats
 
 from helperfunctions import get_pupil_parameters, ellipse_area, ellipse_circumference
+from Ellseg.pytorchtools import load_from_file
+from Ellseg.utils import get_nparams, get_predictions
+from Ellseg.args import parse_precision
 
 # INITIAL LOADING OF ARGS
 args = parse_args()
@@ -26,7 +29,12 @@ filename = args.load
 if not os.path.exists(filename):
     print("model path not found !!!")
     exit(1)
-MODEL_DICT_STR, CHANNELS = model_channel_dict[filename]
+MODEL_DICT_STR, CHANNELS, IS_ELLSEG, ELLSEG_MODEL = model_channel_dict[filename]
+ELLSEG_FOLDER = 'Ellseg'
+ELLSEG_FILEPATH = './'+ELLSEG_FOLDER
+ELLSEG_PRECISION = 32  # precision. 16, 32, 64
+
+ELLSEG_PRECISION = parse_precision(ELLSEG_PRECISION)
 
 # SETTINGS
 ROTATION = 0
@@ -73,13 +81,34 @@ def main():
         device=torch.device("cuda")
     else:
         device=torch.device("cpu")
+    
+    if torch.cuda.device_count() > 1:
+        print('Moving to a multiGPU setup for Ellseg.')
+        args.useMultiGPU = True
+    else:
+        args.useMultiGPU = False
         
     model = model_dict[MODEL_DICT_STR]
-    model  = model.to(device)
-        
-    model.load_state_dict(torch.load(filename))
-    model = model.to(device)
-    model.eval()
+    
+    if not IS_ELLSEG:
+        model  = model.to(device)
+        model.load_state_dict(torch.load(filename))
+        model = model.to(device)
+        model.eval()
+    else:
+        LOGDIR = os.path.join(os.getcwd(), ELLSEG_FOLDER, 'ExpData', 'logs',\
+                          'ritnet_v2', ELLSEG_MODEL)
+        path2checkpoint = os.path.join(LOGDIR, 'checkpoints')
+        checkpointfile = os.path.join(path2checkpoint, 'checkpoint.pt')
+        netDict = load_from_file([checkpointfile, ''])
+        #print(checkpointfile)
+        #print(netDict)
+        model.load_state_dict(netDict['state_dict'])
+        #print('Parameters: {}'.format(get_nparams(model)))
+        model = model if not args.useMultiGPU else torch.nn.DataParallel(model)
+        model = model.to(device)
+        model = model.to(ELLSEG_PRECISION)
+        model.eval()
     
     if not os.path.exists(args.video):
         print("input video not found!")
@@ -187,7 +216,7 @@ def main():
             M = cv2.getRotationMatrix2D(center, ROTATION, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
                 
-            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY)
+            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY, isEllseg=IS_ELLSEG, ellsegPrecision=ELLSEG_PRECISION)
             
             IOU = 0
             

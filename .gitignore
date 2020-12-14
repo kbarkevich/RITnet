@@ -8,3 +8,8 @@
 *.zip
 *.mp4
 pp_data.txt
+/Ellseg/__pycache__/
+/Ellseg/_pycache_/
+/Ellseg/models/__pycache__/
+/Ellseg/models/_pycache_/
+/Ellseg/ExpData/logs/

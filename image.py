@@ -61,16 +61,27 @@ def get_mask_from_path(path: str, model, useGpu=True):
     predict = get_predictions(output)
     return predict
     
-def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False):
+def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False, isEllseg=False, ellsegPrecision=None):
     if useGpu:
         device=torch.device("cuda")
     else:
         device=torch.device("cpu")
     
-    img = image.unsqueeze(1)
-    data = img.to(device)   
-    output = model(data)
-    rawpredict = get_predictions(output)
+    if not isEllseg:
+        img = image.unsqueeze(1)
+        data = img.to(device)   
+        output = model(data)
+        rawpredict = get_predictions(output)
+    else:
+        img = np.array(Image.fromarray(image).convert("L"))
+        img = (img - img.mean())/img.std()
+        img = torch.from_numpy(img).unsqueeze(0).to(ellsegPrecision)  # Adds a singleton for channels
+        img = img.unsqueeze(0)
+        img = img.to(device).to(ellsegPrecision)
+        x4, x3, x2, x1, x = model.enc(img)
+        op = model.dec(x4, x3, x2, x1, x)
+        rawpredict=get_predictions(op)
+    
     predict = rawpredict + 1
     # print(np.unique(predict[0].cpu().numpy()))
     pred_img = 1 - predict[0].cpu().numpy()/channels
@@ -102,9 +113,12 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
         return pred_img, rawpredict
     return pred_img
 
-def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False):
-    img = process_PIL_image(pilimage)
-    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil)
+def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False, isEllseg=False, ellsegPrecision=None):
+    if not isEllseg:
+        img = process_PIL_image(pilimage)
+    else:
+        img = pilimage
+    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil, isEllseg, ellsegPrecision)
     
 def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None):
     if useGpu:
