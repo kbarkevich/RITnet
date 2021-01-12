@@ -46,8 +46,9 @@ SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows dow
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
-SHOW_ELLIPSE_FIT = True
+SHOW_ELLIPSE_FIT = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
+OUTPUT_TIME_MEASUREMENTS = True
 START_FRAME = 0
 ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
@@ -191,6 +192,7 @@ def main():
         seconds_start = datetime.datetime.now()  # Start timer
         flag, frame = video.read()
         if flag:
+            print()
             count += 1
             if count < START_FRAME:
                 continue
@@ -201,6 +203,8 @@ def main():
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             
             pad = False
+            
+            t = datetime.datetime.now()  # Time measurement - preprocessing time start
             
             # If the video is 192x192, pad the sides 32 pixels each
             # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
@@ -216,13 +220,22 @@ def main():
             center = (w / 2, h / 2)
             M = cv2.getRotationMatrix2D(center, ROTATION, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
-                
+            
+            time_preprocessing = datetime.datetime.now() - t  # Time measurement - preprocessing time finish
+            t = datetime.datetime.now()  # Time measurement - masking time start
+            
             pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY, isEllseg=IS_ELLSEG, ellsegPrecision=ELLSEG_PRECISION)
             
-            IOU = 0
+            time_masking = datetime.datetime.now() - t  # Time measurement - masking time finish
+            time_ellipsefit = 0  # Time measurement - ellipse fitting time init
+            time_ellipsemetrics = 0  # Time measurement - ellipse metrics time init
             
+            IOU = 0
+            ellimage = None
             # Calculate PP score data only if PP score is used
             if SAVE_SEPARATED_PP_FRAMES or SHOW_PP_OVERLAY or SHOW_PP_GRAPH or OUTPUT_PP_DATA_TO_JSON:
+                t = datetime.datetime.now()  # Time measurement - ellipse fitting time start
+                
                 # Scoring step 1: Get area/perimeter directly from mask
                 if CHANNELS == 4:
                     iris_perimeter, pupil_perimeter, iris_area, pupil_area = get_area_perimiters_from_mask(pred_img, iris_thresh=0.6, pupil_thresh=0.1)
@@ -238,16 +251,20 @@ def main():
                 params_get[params_get >= (CHANNELS-1)/CHANNELS] = 0.75
                 pupil_ellipse = get_pupil_parameters(1-params_get)
                 
+                time_ellipsefit = datetime.datetime.now() - t  # Time measurement - ellipse fitting time finish
+                
                 pupil_mask_only_pixels = 0
                 pupil_ellipse_only_pixels = 0
                 pupil_overlap_pixels = 0
+                
+                t = datetime.datetime.now()  # Time measurement - ellipse metrics time start
                 
                 if pupil_ellipse is not None and pupil_ellipse[0] >= -0:
                     center_coordinates = (int(pupil_ellipse[0]), int(pupil_ellipse[1]))
                     #axesLength = (int(pupil_ellipse[2])+2, int(pupil_ellipse[3])+2)
                     axesLength = (int(pupil_ellipse[2]), int(pupil_ellipse[3]))
                     angle = pupil_ellipse[4]*180/(np.pi)
-                    print("angle: ",angle)
+                    #print("angle: ",angle)
                     startAngle = 0
                     endAngle = 360
                     color = (0, 0, 255)
@@ -267,8 +284,8 @@ def main():
                     pupil_ellipse_only_pixels = np.sum(np.all(ellimage == [0, 0, 255], axis=2)) if ellimage is not None else 0
                     pupil_overlap_pixels = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
                     
-                    if SHOW_ELLIPSE_FIT:
-                        cv2.imshow("ELLIPSE", ellimage)
+                    #if SHOW_ELLIPSE_FIT:
+                    #    cv2.imshow("ELLIPSE", ellimage)
                     
                     intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
                     union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2)) if ellimage is not None else 0
@@ -296,7 +313,9 @@ def main():
                         pp_iris = pp_iris_y[len(pp_iris_y)-1]
                     else:
                         pp_iris = 0
-    
+                
+                time_ellipsemetrics = datetime.datetime.now() - t  # Time measurement - ellipse metrics time finish
+                
                 pp_iris_y.append(pp_iris)
                 pp_pupil_y.append(pp_pupil)
                 pp_pupil_diff_y.append(pp_pupil_diff)
@@ -309,6 +328,8 @@ def main():
                             'pupil_ellipse_fit': {"mask_only": int(pupil_mask_only_pixels), "ellipse_only": int(pupil_ellipse_only_pixels), "overlap": int(pupil_overlap_pixels)}
                     }
             
+            t = datetime.datetime.now()  # Time measurement - graphing time start
+            
             if SHOW_PP_GRAPH:
                 plt.title("Pupil Polsby-Popper Score")
                 plt.xlabel("frame")
@@ -319,6 +340,9 @@ def main():
                 plt.ylim(bottom=0, top=1)
                 plt.legend()
                 plt.show()
+            
+            time_graphing = datetime.datetime.now() - t  # Time measurement - graphing time finish
+            t = datetime.datetime.now()  # Time measurement - overlay generation time start
             
             # Add score overlay to image
             if SHOW_PP_OVERLAY:
@@ -343,6 +367,8 @@ def main():
                 frame = cv2.putText(frame, "Shape Conf.:  "+"{:.4f}".format(IOU), orgIouDiff, font, fontScale,
                                     colorWhite, thickness, cv2.LINE_AA)
             
+            time_overlay = datetime.datetime.now() - t  # Time measurement - overlay generation time finish
+            t = datetime.datetime.now()  # Time measurement - output image generation time start
             
             inp = process_PIL_image(frame, False, clahe, table).squeeze() * 0.5 + 0.5
             img_orig = np.clip(inp,0,1)
@@ -364,9 +390,19 @@ def main():
                 
                 combine = np.append(combine, r, axis=1)
                 combine = np.vstack([combine, stretchedcombine])
+                
+            time_outputgeneration = datetime.datetime.now() - t  # Time measurement - output image generation time finish
+            t = datetime.datetime.now()  # Time measurement - output display time start
+                
+            if SHOW_ELLIPSE_FIT and ellimage is not None:
+                cv2.imshow("ELLIPSE", ellimage)
             cv2.imshow('RITnet', combine)
             if SEPARATE_ORIGINAL_VIDEO:
                 cv2.imshow('Original', img_orig)
+                
+            time_outputdisplay = datetime.datetime.now() - t  # Time measurement - output display finish
+            t = datetime.datetime.now()  # Time measurement - output image saving time start
+                
             if SAVE_SEPARATED_PP_FRAMES:
                 pp_folder = "{}-{}".format(str(round(int(math.floor(pp_pupil * 10.0)) / 10, 1)), str(round(int(math.floor(pp_pupil * 10.0)) / 10 + .10, 1)))
                 pp_diff_folder = "{}-{}".format(str(round(int(math.floor(pp_pupil_diff * 10.0)) / 10, 1)), str(round(int(math.floor(pp_pupil_diff * 10.0)) / 10 + .10, 1)))
@@ -378,10 +414,33 @@ def main():
             pred_img_3[:,:,0]=pred_img
             pred_img_3[:,:,1]=pred_img
             pred_img_3[:,:,2]=pred_img
-
             plt.imsave('video/images/{}.png'.format(count),np.uint8(pred_img_3 * 255))
+            
+            time_outputimage = datetime.datetime.now() - t  # Time measurement - output image saving time finish
+            t = datetime.datetime.now()  # Time measurement - output video frame time start
+            
             # maskvideowriter.write((pred_img * 255).astype('uint8'))  # write to mask video output
             videowriter.write((combine * 255).astype('uint8')) # write to video output
+            
+            time_output_video = datetime.datetime.now() - t  # Time measurement - output video frame time finish
+            
+            # Time measurement - display results for frame
+            if OUTPUT_TIME_MEASUREMENTS:
+                def sortTime(val):
+                    return val[1]
+                time_arr = [("preprocessing      ", time_preprocessing.microseconds),
+                ("masking            ", time_masking.microseconds),
+                ("ellipse fit        ", time_ellipsefit.microseconds),
+                ("ellipse metrics    ", time_ellipsemetrics.microseconds),
+                ("graphing           ", time_graphing.microseconds),
+                ("overlay            ", time_overlay.microseconds),
+                ("output generation  ", time_outputgeneration.microseconds),
+                ("output display     ", time_outputdisplay.microseconds),
+                ("output image save  ", time_outputimage.microseconds),
+                ("output video frame ", time_output_video.microseconds)]
+                time_arr.sort(key=sortTime, reverse=True)
+                for time_entry in time_arr:
+                    print(time_entry[0], ": ", time_entry[1], " microseconds")
             
             # Calculate time remaining using last (up to) 10 frames
             seconds_end = datetime.datetime.now()
