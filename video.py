@@ -46,9 +46,10 @@ SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows dow
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
+SHOW_ELLIPSE_FIT = True
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 START_FRAME = 0
-ISOLATE_FRAMES = [606,808,14152,17751,23714]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
+ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
 def draw_ellipse(
         img, center, axes, angle,
@@ -237,7 +238,9 @@ def main():
                 params_get[params_get >= (CHANNELS-1)/CHANNELS] = 0.75
                 pupil_ellipse = get_pupil_parameters(1-params_get)
                 
-              
+                pupil_mask_only_pixels = 0
+                pupil_ellipse_only_pixels = 0
+                pupil_overlap_pixels = 0
                 
                 if pupil_ellipse is not None and pupil_ellipse[0] >= -0:
                     center_coordinates = (int(pupil_ellipse[0]), int(pupil_ellipse[1]))
@@ -259,7 +262,13 @@ def main():
 
                     image_copy[pupilimage] =  [0, 255, 0]
                     ellimage = (ellimage + image_copy) if ellimage is not None else ellimage
-                    # cv2.imshow("ELLIPSE", ellimage)
+                    
+                    pupil_mask_only_pixels = np.sum(np.all(ellimage == [0, 255, 0], axis=2)) if ellimage is not None else 0
+                    pupil_ellipse_only_pixels = np.sum(np.all(ellimage == [0, 0, 255], axis=2)) if ellimage is not None else 0
+                    pupil_overlap_pixels = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
+                    
+                    if SHOW_ELLIPSE_FIT:
+                        cv2.imshow("ELLIPSE", ellimage)
                     
                     intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
                     union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2)) if ellimage is not None else 0
@@ -296,7 +305,8 @@ def main():
                     pp_data[count] = {
                             'pp': pp_pupil,
                             'pp_diff': pp_pupil_diff,
-                            'shape_conf': IOU
+                            'shape_conf': IOU,
+                            'pupil_ellipse_fit': {"mask_only": int(pupil_mask_only_pixels), "ellipse_only": int(pupil_ellipse_only_pixels), "overlap": int(pupil_overlap_pixels)}
                     }
             
             if SHOW_PP_GRAPH:

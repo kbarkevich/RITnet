@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import torch
 import torchvision
+from torchvision import transforms
 import numpy as np
 from models import model_dict
 from dataset import transform
@@ -19,11 +20,11 @@ from PIL import Image
 from helperfunctions import get_pupil_parameters
 from skimage import io, measure
 
-def init_model(devicestr="cuda"):
+def init_model(devicestr="cuda", modelname="best_model.pkl"):
     device = torch.device(devicestr)
     model = model_dict["densenet"]
     model  = model.to(device)
-    filename = os.path.dirname(os.path.abspath(__file__)) + "/ritnet_pupil.pkl";
+    filename = os.path.dirname(os.path.abspath(__file__)) + "/"+modelname;
         
     model.load_state_dict(torch.load(filename))
     model = model.to(device)
@@ -120,24 +121,56 @@ def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, inclu
         img = pilimage
     return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil, isEllseg, ellsegPrecision)
     
-def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None):
+def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None,):
+    """
+    OUTPUT FORMAT
+    {
+        0: center x,
+        1: center y,
+        2: ellipse major axis radius,
+        3: ellipse minor axis radius,
+        4: ellipse angle
+    }
+    """
     if useGpu:
         device=torch.device("cuda")
     else:
         device=torch.device("cpu")
-    
     if predict is None:
-        img = image.unsqueeze(1)
-        data = img.to(device)   
-        output = model(data)
-        predict = get_predictions(output)
+        if not isEllseg:
+            img = image.unsqueeze(1)
+            data = img.to(device)   
+            output = model(data)
+            predict = get_predictions(output)
+            pred_img = predict[0].numpy()
+        else:  # w:320 h:240
+            img = np.array(transforms.ToPILImage()(image).convert("L"))
+            img = (img - img.mean())/img.std()
+            img = torch.from_numpy(img).unsqueeze(0).to(ellsegPrecision)  # Adds a singleton for channels
+            img = img.unsqueeze(0)
+            img = img.to(device).to(ellsegPrecision)
+            x4, x3, x2, x1, x = model.enc(img)
+            op = model.dec(x4, x3, x2, x1, x)
+            #elOut = model.elReg(x, 0) # Linear regression to ellipse parameters
+            
+            #print(elOut.shape)
+            
+            predict=get_predictions(op)
+            pred_img = predict[0].numpy()
+            
+            # cv2.imshow("ELLIPSE", pred_img/2)
+    else:
         pred_img = predict[0].numpy()
+            
         
     return get_pupil_parameters(pred_img)
     
-def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None):
-    img = process_PIL_image(pilimage)
-    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict)
+def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None,):
+    if not isEllseg:
+        img = process_PIL_image(pilimage)
+    else:
+        img = pilimage
+    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict, isEllseg, ellsegPrecision)
     if res is not None:
         res[4] = res[4] * 180 / np.pi
     return res
