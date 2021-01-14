@@ -46,7 +46,7 @@ SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows dow
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
-SHOW_ELLIPSE_FIT = True
+SHOW_ELLIPSE_FIT = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 OUTPUT_TIME_MEASUREMENTS = True
 START_FRAME = 0
@@ -224,7 +224,6 @@ def main():
             
             # Perform the rotation
             (h, w) = frame.shape[:2]
-            print(w, " ", h)
             center = (w / 2, h / 2)
             M = cv2.getRotationMatrix2D(center, ROTATION, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
@@ -256,7 +255,6 @@ def main():
                 # Scoring step 3: Get ellipse from mask
                 #params_get = predict[0].numpy()/CHANNELS
                 params_get = 1 - pred_img#predict[0].numpy()/CHANNELS
-                print(np.unique(params_get))
                 params_get[params_get <= (CHANNELS-1)/CHANNELS] = 0
                 params_get[params_get > (CHANNELS-1)/CHANNELS] = 0.75
                 pupil_ellipse = get_pupil_parameters(1-params_get)
