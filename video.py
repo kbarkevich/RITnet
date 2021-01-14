@@ -39,7 +39,6 @@ ELLSEG_PRECISION = parse_precision(ELLSEG_PRECISION)
 
 # SETTINGS
 ROTATION = 0
-PAD = False
 THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
@@ -47,10 +46,11 @@ SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows dow
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
-SHOW_ELLIPSE_FIT = False
+SHOW_ELLIPSE_FIT = True
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 OUTPUT_TIME_MEASUREMENTS = True
 START_FRAME = 0
+PAD = (0, 80)#None # Tuple of two integers representing even-numbered horizontal padding and vertical padding or None
 RESIZE = (320, 240)  # Tuple of two integers or None
 ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
@@ -122,6 +122,8 @@ def main():
     fps = video.get(cv2.CAP_PROP_FPS)
     width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    if PAD is not None:
+        width, height = (width + PAD[0], height + PAD[1])
     if RESIZE is not None:
         width, height = RESIZE
     fourcc = cv2.VideoWriter_fourcc(*"X264")
@@ -206,9 +208,10 @@ def main():
             # cv2.imshow('mask', predict[0].cpu().numpy()/CHANNELS)
             pos_frame = video.get(cv2.CAP_PROP_POS_FRAMES)
             
-            pad = False
-            
             t = datetime.datetime.now()  # Time measurement - preprocessing time start
+            
+            if PAD is not None:
+                frame = np.pad(frame, pad_width=((int(PAD[1]/2), int(PAD[1]/2)), (int(PAD[0]/2), int(PAD[0]/2)), (0, 0)), mode='constant', constant_values=0)
             
             #print(np.unique(frame))
             if RESIZE is not None:
@@ -217,17 +220,11 @@ def main():
                 frame = np.array(frame)
             #print(type(frame))
             
-            # If the video is 192x192, pad the sides 32 pixels each
-            # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
-            if PAD and (tuple(frame.shape[1::-1]) == (192, 192) or tuple(frame.shape[1::-1]) == (400, 400)):
-                #pass
-                pad = True
-                comb = get_stretched_combine(frame.copy(), tuple(frame.shape[1::-1])[0]/6)
-            
             # ---------------------------------------------------
             
             # Perform the rotation
             (h, w) = frame.shape[:2]
+            print(w, " ", h)
             center = (w / 2, h / 2)
             M = cv2.getRotationMatrix2D(center, ROTATION, 1.0)
             frame = cv2.warpAffine(frame, M, (w, h))
@@ -257,9 +254,11 @@ def main():
                 pp_pupil = get_polsby_popper_score(pupil_perimeter, pupil_area)
                 pp_pupil_diff = 0
                 # Scoring step 3: Get ellipse from mask
-                params_get = predict[0].numpy()/CHANNELS
-                params_get[params_get < (CHANNELS-1)/CHANNELS] = 0
-                params_get[params_get >= (CHANNELS-1)/CHANNELS] = 0.75
+                #params_get = predict[0].numpy()/CHANNELS
+                params_get = 1 - pred_img#predict[0].numpy()/CHANNELS
+                print(np.unique(params_get))
+                params_get[params_get <= (CHANNELS-1)/CHANNELS] = 0
+                params_get[params_get > (CHANNELS-1)/CHANNELS] = 0.75
                 pupil_ellipse = get_pupil_parameters(1-params_get)
                 
                 time_ellipsefit = datetime.datetime.now() - t  # Time measurement - ellipse fitting time finish
@@ -388,19 +387,7 @@ def main():
                 combine = np.hstack([img_orig, (img_orig + pred_img) / 2, pred_img])
             else:
                 combine = np.hstack([img_orig,pred_img])
-            #combine = get_stretched_combine(frame.copy(), tuple(frame.shape[1::-1])[0]/6)
-            if pad:
-                stretchedcombine = comb
-                height = len(combine[0])
-                r = []
-                e = []
-                for j in range(len(combine)):
-                    e.append(0)
-                for i in range(len(stretchedcombine[0]) - len(combine[0])):
-                    r.append(e)
-                
-                combine = np.append(combine, r, axis=1)
-                combine = np.vstack([combine, stretchedcombine])
+
                 
             time_outputgeneration = datetime.datetime.now() - t  # Time measurement - output image generation time finish
             t = datetime.datetime.now()  # Time measurement - output display time start
