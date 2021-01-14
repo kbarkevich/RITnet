@@ -145,7 +145,6 @@ def main():
     elif PAD and width == 400 and height == 400:
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult+(133*mult)),int(height*2)))
     else:
-        print("WE HERE WITH ",width," AND ",height)
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult),int(height)))
     # maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
     while not video.isOpened():
@@ -216,7 +215,6 @@ def main():
                 frame = Image.fromarray(frame)
                 frame.thumbnail(RESIZE, Image.ANTIALIAS)
                 frame = np.array(frame)
-                print(frame.shape[1::-1])
             #print(type(frame))
             
             # If the video is 192x192, pad the sides 32 pixels each
