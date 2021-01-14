@@ -6,6 +6,7 @@ Created on Fri Oct  2 13:36:02 2020
 """
 import torch
 import numpy as np
+from PIL import Image
 import os
 import cv2
 from opt import parse_args
@@ -50,6 +51,7 @@ SHOW_ELLIPSE_FIT = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 OUTPUT_TIME_MEASUREMENTS = True
 START_FRAME = 0
+RESIZE = (320, 240)  # Tuple of two integers or None
 ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
 def draw_ellipse(
@@ -120,6 +122,8 @@ def main():
     fps = video.get(cv2.CAP_PROP_FPS)
     width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    if RESIZE is not None:
+        width, height = RESIZE
     fourcc = cv2.VideoWriter_fourcc(*"X264")
     os.makedirs('video/images/',exist_ok=True)
     os.makedirs('video/outputs/',exist_ok=True)
@@ -141,6 +145,7 @@ def main():
     elif PAD and width == 400 and height == 400:
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult+(133*mult)),int(height*2)))
     else:
+        print("WE HERE WITH ",width," AND ",height)
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult),int(height)))
     # maskvideowriter = cv2.VideoWriter("video/mask.mp4", fourcc, fps, (int(width),int(height)))
     while not video.isOpened():
@@ -205,6 +210,14 @@ def main():
             pad = False
             
             t = datetime.datetime.now()  # Time measurement - preprocessing time start
+            
+            #print(np.unique(frame))
+            if RESIZE is not None:
+                frame = Image.fromarray(frame)
+                frame.thumbnail(RESIZE, Image.ANTIALIAS)
+                frame = np.array(frame)
+                print(frame.shape[1::-1])
+            #print(type(frame))
             
             # If the video is 192x192, pad the sides 32 pixels each
             # STEP - VIDEO TO 4:3 RATIO VIA PADDING - ADD 32 BLACK PIXELS TO EACH SIDE FOR A 192x192 IMAGE
