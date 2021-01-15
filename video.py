@@ -38,19 +38,20 @@ ELLSEG_PRECISION = 32  # precision. 16, 32, 64
 ELLSEG_PRECISION = parse_precision(ELLSEG_PRECISION)
 
 # SETTINGS
+FPS = 10
 ROTATION = 0
 THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
-SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_OVERLAY = False  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
-SHOW_ELLIPSE_FIT = False
+SHOW_ELLIPSE_FIT = True
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 OUTPUT_TIME_MEASUREMENTS = True
 START_FRAME = 0
-PAD = (0, 80)#None # Tuple of two integers representing even-numbered horizontal padding and vertical padding or None
+PAD = None#(0, 80)#None # Tuple of two integers representing even-numbered horizontal padding and vertical padding or None
 RESIZE = (320, 240)  # Tuple of two integers or None
 ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
@@ -119,7 +120,7 @@ def main():
         exit(1)
     
     video = cv2.VideoCapture(args.video)
-    fps = video.get(cv2.CAP_PROP_FPS)
+    fps = video.get(cv2.CAP_PROP_FPS) if FPS is None else FPS
     width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
     if PAD is not None:
@@ -141,7 +142,7 @@ def main():
     
     mult = 2
     if OVERLAP_MASK:
-        mult = 3
+        mult = 2
     if PAD and width == 192 and height == 192:
         videowriter = cv2.VideoWriter("video/outputs/out.mp4", fourcc, fps, (int(width*mult+(64*mult)),int(height*2)))
     elif PAD and width == 400 and height == 400:
@@ -255,8 +256,8 @@ def main():
                 # Scoring step 3: Get ellipse from mask
                 #params_get = predict[0].numpy()/CHANNELS
                 params_get = 1 - pred_img#predict[0].numpy()/CHANNELS
-                params_get[params_get <= (CHANNELS-1)/CHANNELS] = 0
-                params_get[params_get > (CHANNELS-1)/CHANNELS] = 0.75
+                params_get[params_get <= 0.9] = 0
+                params_get[params_get > 0.9] = 0.75
                 pupil_ellipse = get_pupil_parameters(1-params_get)
                 
                 time_ellipsefit = datetime.datetime.now() - t  # Time measurement - ellipse fitting time finish
@@ -382,7 +383,15 @@ def main():
             img_orig = np.clip(inp,0,1)
             img_orig = np.array(img_orig)
             if OVERLAP_MASK:
-                combine = np.hstack([img_orig, (img_orig + pred_img) / 2, pred_img])
+                #outtable = np.linspace(0, 1, 256)**0.9  # CHANGE 0.8 TO 0.6 FOR THE DARKER VIDEO
+                #out_img_orig = cv2.LUT(np.uint8(np.array(img_orig)), outtable)
+                clahe_param = cv2.createCLAHE(clipLimit=2, tileGridSize=(2,2))
+                img_orig = clahe_param.apply(np.array(np.uint8(img_orig*255)))/255
+                table = 0.5
+                mean = np.mean(img_orig)
+                gamma = math.log(table)/math.log(mean)
+                img_gamma1 = np.power(img_orig, gamma).clip(0,1)
+                combine = np.hstack([img_orig, (img_gamma1 + (1-pred_img)) / 2])
             else:
                 combine = np.hstack([img_orig,pred_img])
 
@@ -392,7 +401,7 @@ def main():
                 
             if SHOW_ELLIPSE_FIT and ellimage is not None:
                 cv2.imshow("ELLIPSE", ellimage)
-            cv2.imshow('RITnet', combine)
+            cv2.imshow('RITnet', cv2.resize(combine, (1920, 1080)))
             if SEPARATE_ORIGINAL_VIDEO:
                 cv2.imshow('Original', img_orig)
                 

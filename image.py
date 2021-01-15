@@ -15,11 +15,32 @@ import numpy as np
 from models import model_dict
 from dataset import transform
 import cv2
+import matplotlib.pyplot as plt
 from utils import get_predictions
 from PIL import Image
-from helperfunctions import get_pupil_parameters
+from helperfunctions import get_pupil_parameters, my_ellipse
 from skimage import io, measure
 
+def draw_ellipse(
+        img, center, axes, angle,
+        startAngle, endAngle, color,
+        thickness=3, lineType=cv2.LINE_AA, shift=10):
+    center = (
+        int(round(center[0] * 2**shift)),
+        int(round(center[1] * 2**shift))
+    )
+    axes = (
+        int(round(axes[0] * 2**shift)),
+        int(round(axes[1] * 2**shift))
+    )
+    try:
+        return cv2.ellipse(
+            img, center, axes, angle*180/np.pi,
+            startAngle, endAngle, color,
+            thickness, lineType, shift)
+    except:
+        return None
+    
 def init_model(devicestr="cuda", modelname="best_model.pkl"):
     device = torch.device(devicestr)
     model = model_dict["densenet"]
@@ -73,6 +94,9 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
         data = img.to(device)   
         output = model(data)
         rawpredict = get_predictions(output)
+        predict = rawpredict + 1
+        # print(np.unique(predict[0].cpu().numpy()))
+        pred_img = 1 - predict[0].cpu().numpy()/channels
     else:
         img = np.array(Image.fromarray(image).convert("L"))
         img = (img - img.mean())/img.std()
@@ -82,11 +106,28 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
         x4, x3, x2, x1, x = model.enc(img)
         op = model.dec(x4, x3, x2, x1, x)
         rawpredict=get_predictions(op)
+        plt.imshow(rawpredict[0], cmap="BrBG", alpha=0.3)
+        ellpred = model.elReg(x, 0).view(-1)
+        #i1, i2, i3, i4, i5, p1, p2, p3, p4, p5 = ellpred[0].cpu().detach().numpy()
+        _, _, H, W = img.shape
+        H_mat = np.array([[W/2, 0, W/2], [0, H/2, H/2], [0, 0, 1]])
+        
+        #import pdb
+        #pdb.set_trace()
+        i_cx, i_cy, i_a, i_b, i_theta, _ = my_ellipse(ellpred[:5].tolist()).transform(H_mat)[0]
+        p_cx, p_cy, p_a, p_b, p_theta, _ = my_ellipse(ellpred[5:].tolist()).transform(H_mat)[0]
+        
+        ellimage = np.full((int(H), int(W)), 2/3)
+        startAngle = 0
+        endAngle = 360
+        iris_color=1/3
+        pupil_color = 0.0
+        pred_img = draw_ellipse(ellimage, (i_cx, i_cy), (i_a, i_b),
+                     i_theta, startAngle, endAngle, iris_color, -1)
+        pred_img = draw_ellipse(ellimage, (p_cx, p_cy), (p_a, p_b),
+                     p_theta, startAngle, endAngle, pupil_color, -1)
     
-    predict = rawpredict + 1
-    # print(np.unique(predict[0].cpu().numpy()))
-    pred_img = 1 - predict[0].cpu().numpy()/channels
-    
+    #print(pred_img)
     # trim pupil if asked to
     if trim_pupil:
         newimg = np.invert(pred_img>0)
