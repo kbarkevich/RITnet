@@ -43,7 +43,7 @@ ROTATION = 0
 THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
 SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
-SHOW_PP_OVERLAY = False  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
@@ -265,7 +265,10 @@ def main():
                 pupil_mask_only_pixels = 0
                 pupil_ellipse_only_pixels = 0
                 pupil_overlap_pixels = 0
-                
+                major_axis = 0
+                minor_axis = 0
+                center_coordinates = (0, 0)
+                angle = 0
                 t = datetime.datetime.now()  # Time measurement - ellipse metrics time start
                 
                 if pupil_ellipse is not None and pupil_ellipse[0] >= -0:
@@ -281,20 +284,21 @@ def main():
                     ellimage = np.zeros((int(height), int(width), 3), dtype="uint8")
                     ellimage = draw_ellipse(ellimage, center_coordinates, axesLength,
                                             angle, startAngle, endAngle, color, -1)
+                    test = np.where(ellimage < 128)
+                    ellimage[test] = 0
                     
                     image_copy = np.zeros((int(height), int(width), 3), dtype = "uint8")
                     
                     pupilimage = np.where(pred_img == 0)
-
                     image_copy[pupilimage] =  [0, 255, 0]
                     ellimage = (ellimage + image_copy) if ellimage is not None else ellimage
-                    
+                    #print(~np.all(ellimage == [0,0,0], axis=2))
                     pupil_mask_only_pixels = np.sum(np.all(ellimage == [0, 255, 0], axis=2)) if ellimage is not None else 0
                     pupil_ellipse_only_pixels = np.sum(np.all(ellimage == [0, 0, 255], axis=2)) if ellimage is not None else 0
                     pupil_overlap_pixels = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
                     
                     #if SHOW_ELLIPSE_FIT:
-                    #    cv2.imshow("ELLIPSE", ellimage)
+                    #    cv2.imshow("ELLIPSE2", ellimage)
                     
                     intersection = np.sum(np.all(ellimage == [0, 255, 255], axis=2)) if ellimage is not None else 0
                     union = np.sum(~np.all(ellimage == [0, 0, 0], axis=2)) if ellimage is not None else 0
@@ -334,7 +338,18 @@ def main():
                             'pp': pp_pupil,
                             'pp_diff': pp_pupil_diff,
                             'shape_conf': IOU,
-                            'pupil_ellipse_fit': {"mask_only": int(pupil_mask_only_pixels), "ellipse_only": int(pupil_ellipse_only_pixels), "overlap": int(pupil_overlap_pixels)}
+                            'pupil_ellipse_fit': {
+                                "pixels": {
+                                    "mask_only_pixels": int(pupil_mask_only_pixels),
+                                    "ellipse_only_pixels": int(pupil_ellipse_only_pixels),
+                                    "overlap_pixels": int(pupil_overlap_pixels),
+                                },
+                                "major_axis": major_axis,
+                                "minor_axis": minor_axis,
+                                "center_x": center_coordinates[0],
+                                "center_y": center_coordinates[1],
+                                "angle": angle
+                            }
                     }
             
             t = datetime.datetime.now()  # Time measurement - graphing time start

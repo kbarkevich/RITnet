@@ -6,7 +6,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # Data input settings
     parser.add_argument('--dataset', type=str, default='Semantic_Segmentation_Dataset/', help='name of dataset')
-    parser.add_argument('--video', type=str, default='104_blink.avi', help='name of input video')
+    parser.add_argument('--video', type=str, default='mask.mp4', help='name of input video')
     # Optimization: General
     parser.add_argument('--bs', type=int, default = 8 )
     parser.add_argument('--epochs', type=int,help='Number of epochs',default= 250)
@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument('--lr', type=float,default= 1e-3,help='Learning rate')
     parser.add_argument('--save', help='save folder name',default='0try')
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
-    parser.add_argument('--load', type=str, default='ritnet_pupil.pkl', help='load checkpoint file name')
+    parser.add_argument('--load', type=str, default='ellseg_allvsone', help='load checkpoint file name')
     parser.add_argument('--resume',  action='store_true', help='resume train from load chkpoint')
     parser.add_argument('--test', action='store_true', help='test only')
     parser.add_argument('--savemodel',action='store_true',help='checkpoint save the model')
