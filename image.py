@@ -162,7 +162,7 @@ def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, inclu
         img = pilimage
     return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil, isEllseg, ellsegPrecision)
     
-def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None,):
+def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None, ellsegEllipse=False):
     """
     OUTPUT FORMAT
     {
@@ -192,6 +192,15 @@ def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, is
             img = img.to(device).to(ellsegPrecision)
             x4, x3, x2, x1, x = model.enc(img)
             op = model.dec(x4, x3, x2, x1, x)
+            
+            if ellsegEllipse:  # Option to get ellipse directly from ellseg output
+                ellpred = model.elReg(x, 0).view(-1)
+                _, _, H, W = img.shape
+                H_mat = np.array([[W/2, 0, W/2], [0, H/2, H/2], [0, 0, 1]])
+                p_cx, p_cy, p_a, p_b, p_theta, _ = my_ellipse(ellpred[5:].tolist()).transform(H_mat)[0]
+                return [p_cx, p_cy, p_a, p_b, p_theta]
+                # [centerX, centerY, axis1, axis2, angle]
+            
             #elOut = model.elReg(x, 0) # Linear regression to ellipse parameters
             
             #print(elOut.shape)
@@ -206,12 +215,12 @@ def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, is
         
     return get_pupil_parameters(pred_img)
     
-def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None,):
+def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None, ellsegEllipse=False):
     if not isEllseg:
         img = process_PIL_image(pilimage)
     else:
         img = pilimage
-    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict, isEllseg, ellsegPrecision)
+    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict, isEllseg, ellsegPrecision, ellsegEllipse)
     if res is not None:
         res[4] = res[4] * 180 / np.pi
     return res

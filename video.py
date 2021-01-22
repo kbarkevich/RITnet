@@ -38,7 +38,7 @@ ELLSEG_PRECISION = 32  # precision. 16, 32, 64
 ELLSEG_PRECISION = parse_precision(ELLSEG_PRECISION)
 
 # SETTINGS
-FPS = 10
+FPS = None#10
 ROTATION = 0
 THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
@@ -47,12 +47,12 @@ SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows dow
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
-SHOW_ELLIPSE_FIT = True
+SHOW_ELLIPSE_FIT = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
 OUTPUT_TIME_MEASUREMENTS = True
 START_FRAME = 0
 PAD = None#(0, 80)#None # Tuple of two integers representing even-numbered horizontal padding and vertical padding or None
-RESIZE = (320, 240)  # Tuple of two integers or None
+RESIZE = None#(320, 240)  # Tuple of two integers or None
 ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
 def draw_ellipse(
