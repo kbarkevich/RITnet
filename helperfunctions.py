@@ -545,7 +545,8 @@ def generateEmptyStorage(name, subset):
 
 # Pupil parameters generator
 def get_pupil_parameters(data_to_fit):
-    data_to_fit=data_to_fit+1 #to make consistency with 4 channel segmentation
+    if len(np.unique(data_to_fit)) == 3:
+        data_to_fit=data_to_fit+1 #to make consistency with 4 channel segmentation
     pupilPts, irisPts = getValidPoints(data_to_fit)
     if len(pupilPts) == 0:
         return None
