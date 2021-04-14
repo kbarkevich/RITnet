@@ -218,7 +218,6 @@ def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, is
             
     if debugWindowName is not None:
         outIm = pred_img/np.max(pred_img)
-        print(np.unique(outIm));
         cv2.imshow(debugWindowName, outIm)
     return get_pupil_parameters(pred_img)
     
