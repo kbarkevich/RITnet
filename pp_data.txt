@@ -1,162 +1,784 @@
 {
     "1": {
-        "pp": 0.882693683506093,
-        "pp_diff": 0.11370478351774205,
-        "shape_conf": 0.040989424373624815,
+        "pp": 0.9378035285817395,
+        "pp_diff": 0.06197668968317993,
+        "shape_conf": 0.8285714285714286,
         "pupil_ellipse_fit": {
-            "mask_only": 613,
-            "ellipse_only": 25672,
-            "overlap": 1155
+            "pixels": {
+                "mask_only_pixels": 27,
+                "ellipse_only_pixels": 21,
+                "overlap_pixels": 580
+            },
+            "major_axis": 14.420284837375567,
+            "minor_axis": 14.075345787796945,
+            "center_x": 185,
+            "center_y": 139,
+            "angle": 2.016798064557087
         }
     },
     "2": {
-        "pp": 0.7119997531705767,
-        "pp_diff": 0.17700698607260978,
-        "shape_conf": 0.07648416063856324,
+        "pp": 0.9594583387067703,
+        "pp_diff": 0.04038813053581003,
+        "shape_conf": 0.8288159771754636,
         "pupil_ellipse_fit": {
-            "mask_only": 115,
-            "ellipse_only": 28620,
-            "overlap": 2453
+            "pixels": {
+                "mask_only_pixels": 28,
+                "ellipse_only_pixels": 14,
+                "overlap_pixels": 581
+            },
+            "major_axis": 14.617538718251875,
+            "minor_axis": 14.324723085777897,
+            "center_x": 184,
+            "center_y": 140,
+            "angle": -89.0163538148375
         }
     },
     "3": {
-        "pp": 0.7459495066738411,
-        "pp_diff": 0.08724112614647783,
-        "shape_conf": 0.009589117466688966,
+        "pp": 0.9481798636441415,
+        "pp_diff": 0.05155952780674822,
+        "shape_conf": 0.8148710166919575,
         "pupil_ellipse_fit": {
-            "mask_only": 2124,
-            "ellipse_only": 32393,
-            "overlap": 344
+            "pixels": {
+                "mask_only_pixels": 42,
+                "ellipse_only_pixels": 12,
+                "overlap_pixels": 537
+            },
+            "major_axis": 14.165700096767006,
+            "minor_axis": 13.797108025578325,
+            "center_x": 184,
+            "center_y": 140,
+            "angle": 88.9294281779581
         }
     },
     "4": {
-        "pp": 0.7428732106314276,
-        "pp_diff": 0.5934580991642763,
-        "shape_conf": 0.019948218468746146,
+        "pp": 0.9263633207959838,
+        "pp_diff": 0.07319851132712552,
+        "shape_conf": 0.8390804597701149,
         "pupil_ellipse_fit": {
-            "mask_only": 0,
-            "ellipse_only": 78403,
-            "overlap": 1618
+            "pixels": {
+                "mask_only_pixels": 32,
+                "ellipse_only_pixels": 0,
+                "overlap_pixels": 511
+            },
+            "major_axis": 13.83242378940586,
+            "minor_axis": 13.367512303515271,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -0.7356272361676234
         }
     },
     "5": {
-        "pp": 0.422252701649346,
-        "pp_diff": 0.5487499472776387,
-        "shape_conf": 0.6678591084204734,
+        "pp": 0.932641177750348,
+        "pp_diff": 0.06734586277557442,
+        "shape_conf": 0.8290468986384266,
         "pupil_ellipse_fit": {
-            "mask_only": 517,
-            "ellipse_only": 452,
-            "overlap": 2427
+            "pixels": {
+                "mask_only_pixels": 38,
+                "ellipse_only_pixels": 13,
+                "overlap_pixels": 548
+            },
+            "major_axis": 14.063248847667868,
+            "minor_axis": 13.980817979619728,
+            "center_x": 185,
+            "center_y": 145,
+            "angle": -46.18689269444025
         }
     },
     "6": {
-        "pp": 0.8835119776905493,
-        "pp_diff": 0.10860165017353618,
-        "shape_conf": 0.8239171374764596,
+        "pp": 0.9171297607142327,
+        "pp_diff": 0.08285904609330907,
+        "shape_conf": 0.8716814159292036,
         "pupil_ellipse_fit": {
-            "mask_only": 31,
-            "ellipse_only": 131,
-            "overlap": 1750
+            "pixels": {
+                "mask_only_pixels": 5,
+                "ellipse_only_pixels": 4,
+                "overlap_pixels": 591
+            },
+            "major_axis": 14.397701511888037,
+            "minor_axis": 14.319255569598676,
+            "center_x": 184,
+            "center_y": 146,
+            "angle": -0.9726998854266855
         }
     },
     "7": {
-        "pp": 0.894848320542576,
-        "pp_diff": 0.08244845783025001,
-        "shape_conf": 0.8753129694541812,
+        "pp": 0.9400903884352549,
+        "pp_diff": 0.059648524579010265,
+        "shape_conf": 0.8985074626865671,
         "pupil_ellipse_fit": {
-            "mask_only": 6,
-            "ellipse_only": 36,
-            "overlap": 1748
+            "pixels": {
+                "mask_only_pixels": 1,
+                "ellipse_only_pixels": 7,
+                "overlap_pixels": 602
+            },
+            "major_axis": 14.44505476664472,
+            "minor_axis": 14.068853487935579,
+            "center_x": 184,
+            "center_y": 146,
+            "angle": 4.126106938770627
         }
     },
     "8": {
-        "pp": 0.8767976346222974,
-        "pp_diff": 0.10891627385735081,
-        "shape_conf": 0.011532781909930151,
+        "pp": 0.9621723384329155,
+        "pp_diff": 0.037802137574374006,
+        "shape_conf": 0.8377192982456141,
         "pupil_ellipse_fit": {
-            "mask_only": 479,
-            "ellipse_only": 107111,
-            "overlap": 1273
+            "pixels": {
+                "mask_only_pixels": 19,
+                "ellipse_only_pixels": 36,
+                "overlap_pixels": 573
+            },
+            "major_axis": 14.17173475632045,
+            "minor_axis": 14.055296552345864,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 11.658915366932504
         }
     },
     "9": {
-        "pp": 0.8980115676593318,
-        "pp_diff": 0.7817344914067378,
-        "shape_conf": 0.006922407049342445,
+        "pp": 0.9434893703897826,
+        "pp_diff": 0.056413856210317914,
+        "shape_conf": 0.8793650793650793,
         "pupil_ellipse_fit": {
-            "mask_only": 0,
-            "ellipse_only": 268621,
-            "overlap": 1876
+            "pixels": {
+                "mask_only_pixels": 11,
+                "ellipse_only_pixels": 9,
+                "overlap_pixels": 554
+            },
+            "major_axis": 14.12477713667057,
+            "minor_axis": 13.899677050005154,
+            "center_x": 184,
+            "center_y": 146,
+            "angle": -82.75366864898251
         }
     },
     "10": {
-        "pp": 0.7293489260201744,
-        "pp_diff": 0.5347271377884361,
-        "shape_conf": 0.02571970895286302,
+        "pp": 0.9373425847732173,
+        "pp_diff": 0.062232555858121374,
+        "shape_conf": 0.8333333333333334,
         "pupil_ellipse_fit": {
-            "mask_only": 0,
-            "ellipse_only": 91427,
-            "overlap": 2439
+            "pixels": {
+                "mask_only_pixels": 39,
+                "ellipse_only_pixels": 10,
+                "overlap_pixels": 515
+            },
+            "major_axis": 13.99121316055679,
+            "minor_axis": 13.52804300048992,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 0.1802014023760385
         }
     },
     "11": {
-        "pp": 0.8391011909332042,
-        "pp_diff": 0.3799847086053607,
-        "shape_conf": 0.028065351019087675,
+        "pp": 0.9673987723173744,
+        "pp_diff": 0.032526330496355116,
+        "shape_conf": 0.8452768729641694,
         "pupil_ellipse_fit": {
-            "mask_only": 165,
-            "ellipse_only": 22817,
-            "overlap": 694
+            "pixels": {
+                "mask_only_pixels": 45,
+                "ellipse_only_pixels": 10,
+                "overlap_pixels": 519
+            },
+            "major_axis": 13.829050524429132,
+            "minor_axis": 13.63498152684214,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -5.171523310606754
         }
     },
     "12": {
-        "pp": 0.8773429285925696,
-        "pp_diff": 0.26289910933942207,
-        "shape_conf": 0.28984282575629544,
+        "pp": 0.9562311483522495,
+        "pp_diff": 0.04282099646364079,
+        "shape_conf": 0.853125,
         "pupil_ellipse_fit": {
-            "mask_only": 652,
-            "ellipse_only": 3120,
-            "overlap": 1715
+            "pixels": {
+                "mask_only_pixels": 23,
+                "ellipse_only_pixels": 11,
+                "overlap_pixels": 546
+            },
+            "major_axis": 14.218641928557107,
+            "minor_axis": 13.521229230672905,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -0.8193158128695162
         }
     },
     "13": {
-        "pp": 0.8915536519819925,
-        "pp_diff": 0.48043254491175846,
-        "shape_conf": 0.06422360492276287,
+        "pp": 0.9626595774737023,
+        "pp_diff": 0.03637775378027508,
+        "shape_conf": 0.8446601941747572,
         "pupil_ellipse_fit": {
-            "mask_only": 0,
-            "ellipse_only": 46336,
-            "overlap": 3272
+            "pixels": {
+                "mask_only_pixels": 45,
+                "ellipse_only_pixels": 7,
+                "overlap_pixels": 522
+            },
+            "major_axis": 13.999000515567921,
+            "minor_axis": 13.30714689024998,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -2.958230556375024
         }
     },
     "14": {
-        "pp": 0.8777712398399078,
-        "pp_diff": 0.08816186556760108,
-        "shape_conf": 0.3427932171455488,
+        "pp": 0.9611330082809363,
+        "pp_diff": 0.0378940505458929,
+        "shape_conf": 0.8449612403100775,
         "pupil_ellipse_fit": {
-            "mask_only": 131,
-            "ellipse_only": 4972,
-            "overlap": 2911
+            "pixels": {
+                "mask_only_pixels": 28,
+                "ellipse_only_pixels": 16,
+                "overlap_pixels": 545
+            },
+            "major_axis": 14.273579976839837,
+            "minor_axis": 13.56449466151501,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 3.41522996737766
         }
     },
     "15": {
-        "pp": 0.9152716024077301,
-        "pp_diff": 0.08299496996370603,
-        "shape_conf": 0.8479741842954464,
+        "pp": 0.965891097654613,
+        "pp_diff": 0.03333302815879302,
+        "shape_conf": 0.8443759630200308,
         "pupil_ellipse_fit": {
-            "mask_only": 182,
-            "ellipse_only": 14,
-            "overlap": 2365
+            "pixels": {
+                "mask_only_pixels": 30,
+                "ellipse_only_pixels": 15,
+                "overlap_pixels": 548
+            },
+            "major_axis": 14.348772282696673,
+            "minor_axis": 13.710543699220224,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 7.354081624650044
         }
     },
     "16": {
-        "pp": 0.8594296077826902,
-        "pp_diff": 0.1397680815531287,
-        "shape_conf": 0.8518987341772152,
+        "pp": 0.9453072518326492,
+        "pp_diff": 0.05450758076344342,
+        "shape_conf": 0.9120715350223547,
         "pupil_ellipse_fit": {
-            "mask_only": 81,
-            "ellipse_only": 136,
-            "overlap": 2692
+            "pixels": {
+                "mask_only_pixels": 2,
+                "ellipse_only_pixels": 3,
+                "overlap_pixels": 612
+            },
+            "major_axis": 14.367595608496984,
+            "minor_axis": 14.05183083688831,
+            "center_x": 184,
+            "center_y": 146,
+            "angle": -84.5911073047339
+        }
+    },
+    "17": {
+        "pp": 0.9552165152803962,
+        "pp_diff": 0.044775447774049626,
+        "shape_conf": 0.8523391812865497,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 19,
+                "ellipse_only_pixels": 28,
+                "overlap_pixels": 583
+            },
+            "major_axis": 14.09144915889873,
+            "minor_axis": 14.026364005397744,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -80.15063732852867
+        }
+    },
+    "18": {
+        "pp": 0.9511821500463816,
+        "pp_diff": 0.04821049558341417,
+        "shape_conf": 0.8658346333853354,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 22,
+                "ellipse_only_pixels": 6,
+                "overlap_pixels": 555
+            },
+            "major_axis": 14.196755360008744,
+            "minor_axis": 13.636636676167633,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -1.940603617629633
+        }
+    },
+    "19": {
+        "pp": 0.9357048046274908,
+        "pp_diff": 0.06423921763629148,
+        "shape_conf": 0.8231511254019293,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 45,
+                "ellipse_only_pixels": 1,
+                "overlap_pixels": 512
+            },
+            "major_axis": 13.839255152053205,
+            "minor_axis": 13.671195566880861,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -2.0852041994662045
+        }
+    },
+    "20": {
+        "pp": 0.9419324597370199,
+        "pp_diff": 0.05718439740488923,
+        "shape_conf": 0.8463949843260188,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 21,
+                "ellipse_only_pixels": 9,
+                "overlap_pixels": 540
+            },
+            "major_axis": 14.007099418818049,
+            "minor_axis": 13.343370726289638,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 88.51759151035253
+        }
+    },
+    "21": {
+        "pp": 0.9431416518009795,
+        "pp_diff": 0.05670642649245461,
+        "shape_conf": 0.89937106918239,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 17,
+                "ellipse_only_pixels": 3,
+                "overlap_pixels": 572
+            },
+            "major_axis": 14.12205954029757,
+            "minor_axis": 13.840640798844836,
+            "center_x": 184,
+            "center_y": 146,
+            "angle": -4.833170584061123
+        }
+    },
+    "22": {
+        "pp": 0.9401402345400389,
+        "pp_diff": 0.05976419829723256,
+        "shape_conf": 0.860655737704918,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 41,
+                "ellipse_only_pixels": 4,
+                "overlap_pixels": 525
+            },
+            "major_axis": 13.807735134282213,
+            "minor_axis": 13.589052442016015,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": -13.2077804223904
+        }
+    },
+    "23": {
+        "pp": 0.946226747882061,
+        "pp_diff": 0.05307449613969761,
+        "shape_conf": 0.8644628099173554,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 32,
+                "ellipse_only_pixels": 6,
+                "overlap_pixels": 523
+            },
+            "major_axis": 13.615915739077161,
+            "minor_axis": 13.040524099627103,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 87.06708353851393
+        }
+    },
+    "24": {
+        "pp": 0.9413408852633414,
+        "pp_diff": 0.058176841664376866,
+        "shape_conf": 0.8514190317195326,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 22,
+                "ellipse_only_pixels": 1,
+                "overlap_pixels": 510
+            },
+            "major_axis": 13.744734696173854,
+            "minor_axis": 13.26047428347183,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 0.7518606577651401
+        }
+    },
+    "25": {
+        "pp": 0.9321244732070442,
+        "pp_diff": 0.06774877283553249,
+        "shape_conf": 0.7961783439490446,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 55,
+                "ellipse_only_pixels": 27,
+                "overlap_pixels": 500
+            },
+            "major_axis": 13.520601648439674,
+            "minor_axis": 13.274284258213964,
+            "center_x": 183,
+            "center_y": 144,
+            "angle": -60.14550705447452
+        }
+    },
+    "26": {
+        "pp": 0.9656702358375311,
+        "pp_diff": 0.03429645513663904,
+        "shape_conf": 0.8083735909822867,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 48,
+                "ellipse_only_pixels": 23,
+                "overlap_pixels": 502
+            },
+            "major_axis": 13.479358613197919,
+            "minor_axis": 13.352915573168717,
+            "center_x": 183,
+            "center_y": 144,
+            "angle": -85.8485145710118
+        }
+    },
+    "27": {
+        "pp": 0.9462267350407333,
+        "pp_diff": 0.05335573841077057,
+        "shape_conf": 0.8868243243243243,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 13,
+                "ellipse_only_pixels": 0,
+                "overlap_pixels": 525
+            },
+            "major_axis": 13.913508499471332,
+            "minor_axis": 13.456837790400618,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 0.3922650350903989
+        }
+    },
+    "28": {
+        "pp": 0.945046281034282,
+        "pp_diff": 0.05484319591404341,
+        "shape_conf": 0.9060509554140127,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 11,
+                "ellipse_only_pixels": 0,
+                "overlap_pixels": 569
+            },
+            "major_axis": 14.007651628565581,
+            "minor_axis": 13.769216042070724,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 9.074250355050538
+        }
+    },
+    "29": {
+        "pp": 0.9697252049803394,
+        "pp_diff": 0.03009454936135214,
+        "shape_conf": 0.8864306784660767,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 9,
+                "ellipse_only_pixels": 8,
+                "overlap_pixels": 601
+            },
+            "major_axis": 14.554420808834477,
+            "minor_axis": 14.23878360067755,
+            "center_x": 184,
+            "center_y": 145,
+            "angle": 4.336588238629606
+        }
+    },
+    "30": {
+        "pp": 0.9431547038862713,
+        "pp_diff": 0.056594886539783396,
+        "shape_conf": 0.8520625889046942,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 30,
+                "ellipse_only_pixels": 2,
+                "overlap_pixels": 599
+            },
+            "major_axis": 14.74526537336804,
+            "minor_axis": 14.369079299044643,
+            "center_x": 191,
+            "center_y": 145,
+            "angle": 19.91512076552721
+        }
+    },
+    "31": {
+        "pp": 0.9590692319428733,
+        "pp_diff": 0.04085470589330109,
+        "shape_conf": 0.8458274398868458,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 42,
+                "ellipse_only_pixels": 5,
+                "overlap_pixels": 598
+            },
+            "major_axis": 14.74976404031653,
+            "minor_axis": 14.541181993603146,
+            "center_x": 199,
+            "center_y": 144,
+            "angle": 8.840670446864769
+        }
+    },
+    "32": {
+        "pp": 0.9583670187291422,
+        "pp_diff": 0.04160206615676443,
+        "shape_conf": 0.8417366946778712,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 49,
+                "ellipse_only_pixels": 8,
+                "overlap_pixels": 601
+            },
+            "major_axis": 14.680173647680336,
+            "minor_axis": 14.547484387475675,
+            "center_x": 203,
+            "center_y": 144,
+            "angle": -42.322224261205704
+        }
+    },
+    "33": {
+        "pp": 0.9369773272940266,
+        "pp_diff": 0.06207242629434229,
+        "shape_conf": 0.819327731092437,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 41,
+                "ellipse_only_pixels": 10,
+                "overlap_pixels": 585
+            },
+            "major_axis": 14.78286754844351,
+            "minor_axis": 14.056888203704633,
+            "center_x": 209,
+            "center_y": 144,
+            "angle": 72.52552086742362
+        }
+    },
+    "34": {
+        "pp": 0.9544657268380019,
+        "pp_diff": 0.04276833940335889,
+        "shape_conf": 0.8780160857908847,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 29,
+                "ellipse_only_pixels": 5,
+                "overlap_pixels": 655
+            },
+            "major_axis": 15.958802095702085,
+            "minor_axis": 14.644141189011643,
+            "center_x": 215,
+            "center_y": 145,
+            "angle": 53.144970755303746
+        }
+    },
+    "35": {
+        "pp": 0.9522426073650447,
+        "pp_diff": 0.04702817871418685,
+        "shape_conf": 0.8543307086614174,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 49,
+                "ellipse_only_pixels": 16,
+                "overlap_pixels": 651
+            },
+            "major_axis": 15.548627241618618,
+            "minor_axis": 14.877696758824763,
+            "center_x": 215,
+            "center_y": 145,
+            "angle": 69.40422881911506
+        }
+    },
+    "36": {
+        "pp": 0.9663634966930762,
+        "pp_diff": 0.0332769784711171,
+        "shape_conf": 0.8649006622516556,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 40,
+                "ellipse_only_pixels": 10,
+                "overlap_pixels": 653
+            },
+            "major_axis": 15.203781809460857,
+            "minor_axis": 14.740173977688814,
+            "center_x": 213,
+            "center_y": 144,
+            "angle": 53.87046187642777
+        }
+    },
+    "37": {
+        "pp": 0.9502057380592857,
+        "pp_diff": 0.04935551303704244,
+        "shape_conf": 0.8687350835322196,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 19,
+                "ellipse_only_pixels": 40,
+                "overlap_pixels": 728
+            },
+            "major_axis": 16.015749227895085,
+            "minor_axis": 15.477104760862893,
+            "center_x": 213,
+            "center_y": 144,
+            "angle": 63.91714026947393
+        }
+    },
+    "38": {
+        "pp": 0.9544657245039684,
+        "pp_diff": 0.04403194387728471,
+        "shape_conf": 0.9084699453551912,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 19,
+                "ellipse_only_pixels": 0,
+                "overlap_pixels": 665
+            },
+            "major_axis": 15.313948010931473,
+            "minor_axis": 14.374191297801367,
+            "center_x": 213,
+            "center_y": 145,
+            "angle": 47.658145647630214
+        }
+    },
+    "39": {
+        "pp": 0.9386020213661033,
+        "pp_diff": 0.06019990801754982,
+        "shape_conf": 0.8552456839309429,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 40,
+                "ellipse_only_pixels": 21,
+                "overlap_pixels": 644
+            },
+            "major_axis": 15.32735837750404,
+            "minor_axis": 14.484677545255936,
+            "center_x": 213,
+            "center_y": 144,
+            "angle": 48.245398064757445
+        }
+    },
+    "40": {
+        "pp": 0.944273381332354,
+        "pp_diff": 0.05472227087541448,
+        "shape_conf": 0.8514851485148515,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 42,
+                "ellipse_only_pixels": 9,
+                "overlap_pixels": 602
+            },
+            "major_axis": 14.84345603300841,
+            "minor_axis": 14.094547758042234,
+            "center_x": 213,
+            "center_y": 144,
+            "angle": 61.41162012285581
+        }
+    },
+    "41": {
+        "pp": 0.9466355955719773,
+        "pp_diff": 0.05199724027375496,
+        "shape_conf": 0.8411214953271028,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 34,
+                "ellipse_only_pixels": 32,
+                "overlap_pixels": 630
+            },
+            "major_axis": 15.146889461059834,
+            "minor_axis": 14.258946936509556,
+            "center_x": 212,
+            "center_y": 144,
+            "angle": 29.06303800875931
+        }
+    },
+    "42": {
+        "pp": 0.9497543028820085,
+        "pp_diff": 0.04959489591731825,
+        "shape_conf": 0.835195530726257,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 43,
+                "ellipse_only_pixels": 15,
+                "overlap_pixels": 598
+            },
+            "major_axis": 14.808351807716283,
+            "minor_axis": 14.203982445573985,
+            "center_x": 212,
+            "center_y": 144,
+            "angle": 50.91962401767622
+        }
+    },
+    "43": {
+        "pp": 0.9580335017395059,
+        "pp_diff": 0.04134450753691954,
+        "shape_conf": 0.8633093525179856,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 30,
+                "ellipse_only_pixels": 11,
+                "overlap_pixels": 600
+            },
+            "major_axis": 14.928436910560556,
+            "minor_axis": 14.33253541286689,
+            "center_x": 213,
+            "center_y": 145,
+            "angle": 64.88620729167647
+        }
+    },
+    "44": {
+        "pp": 0.9565884942167348,
+        "pp_diff": 0.042951533673722064,
+        "shape_conf": 0.8627167630057804,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 27,
+                "ellipse_only_pixels": 12,
+                "overlap_pixels": 597
+            },
+            "major_axis": 14.69935689750327,
+            "minor_axis": 14.193371698259005,
+            "center_x": 210,
+            "center_y": 137,
+            "angle": 59.5324713884833
+        }
+    },
+    "45": {
+        "pp": 0.9466730977700667,
+        "pp_diff": 0.05252951515083992,
+        "shape_conf": 0.8381679389312977,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 38,
+                "ellipse_only_pixels": 14,
+                "overlap_pixels": 549
+            },
+            "major_axis": 14.346016748316396,
+            "minor_axis": 13.699320784541444,
+            "center_x": 208,
+            "center_y": 134,
+            "angle": 9.756142420338152
+        }
+    },
+    "46": {
+        "pp": 0.9555761350544831,
+        "pp_diff": 0.04380284643363774,
+        "shape_conf": 0.8202614379084967,
+        "pupil_ellipse_fit": {
+            "pixels": {
+                "mask_only_pixels": 39,
+                "ellipse_only_pixels": 25,
+                "overlap_pixels": 502
+            },
+            "major_axis": 13.755978453698162,
+            "minor_axis": 13.207299044096604,
+            "center_x": 207,
+            "center_y": 131,
+            "angle": 5.827609716216804
         }
     }
 }

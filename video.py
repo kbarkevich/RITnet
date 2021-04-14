@@ -42,17 +42,19 @@ FPS = None#10
 ROTATION = 0
 THREADED = False
 SEPARATE_ORIGINAL_VIDEO = False
-SAVE_SEPARATED_PP_FRAMES = True  # Setting enables Polsby-Popper scoring, which slows down processing
-SHOW_PP_OVERLAY = True  # Setting enables Polsby-Popper scoring, which slows down processing
+SAVE_SEPARATED_PP_FRAMES = False  # Setting enables Polsby-Popper scoring, which slows down processing
+SHOW_PP_OVERLAY = False  # Setting enables Polsby-Popper scoring, which slows down processing
 SHOW_PP_GRAPH = False  # Setting enables Polsby-Popper scoring, which slows down processing
-OUTPUT_PP_DATA_TO_JSON = True  # Setting enables Polsby-Popper scoring, which slows down processing
+OUTPUT_PP_DATA_TO_JSON = False  # Setting enables Polsby-Popper scoring, which slows down processing
 OVERLAP_MASK = True
 SHOW_ELLIPSE_FIT = False
 KEEP_BIGGEST_PUPIL_BLOB_ONLY = True
-OUTPUT_TIME_MEASUREMENTS = True
+OUTPUT_TIME_MEASUREMENTS = False
 START_FRAME = 0
-PAD = None#(0, 80)#None # Tuple of two integers representing even-numbered horizontal padding and vertical padding or None
-RESIZE = None#(320, 240)  # Tuple of two integers or None
+END_FRAME = None
+USE_ELLSEG_ELLIPSE_AS_MASK = True  # If ellseg is the model, make the mask a perfect ellipse around its found pupil and iris
+PAD = (0, 80)  #None # Tuple of two integers representing even-numbered horizontal padding and vertical padding or None 432x576
+RESIZE = None#(320, 240)  # Tuple of two integers or None - preferrably 320x240 for ellseg
 ISOLATE_FRAMES = [21,216,551,741,846,6529,9336,10081,13729,13816,14581]  # Set to save independent frames of the output into a dedicated folder, for easy mass-data-gathering.
 
 def draw_ellipse(
@@ -195,7 +197,7 @@ def main():
     iou_y = []
     pp_data = {}
     seconds_arr = []
-    while True:
+    while True and (END_FRAME is None or count < END_FRAME):
         seconds_start = datetime.datetime.now()  # Start timer
         flag, frame = video.read()
         if flag:
@@ -232,7 +234,7 @@ def main():
             time_preprocessing = datetime.datetime.now() - t  # Time measurement - preprocessing time finish
             t = datetime.datetime.now()  # Time measurement - masking time start
             
-            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY, isEllseg=IS_ELLSEG, ellsegPrecision=ELLSEG_PRECISION)
+            pred_img, predict = get_mask_from_PIL_image(frame, model, True, False, True, CHANNELS, KEEP_BIGGEST_PUPIL_BLOB_ONLY, isEllseg=IS_ELLSEG, ellsegPrecision=ELLSEG_PRECISION, useEllsegEllipseAsMask=USE_ELLSEG_ELLIPSE_AS_MASK)
             
             time_masking = datetime.datetime.now() - t  # Time measurement - masking time finish
             time_ellipsefit = 0  # Time measurement - ellipse fitting time init
@@ -479,7 +481,7 @@ def main():
             # Wait for next frame
             video.set(cv2.CAP_PROP_POS_FRAMES, pos_frame-1)
             print("frame is not ready")
-            cv2.waitKey(1000)
+            cv2.waitKey(2)
         
         if cv2.waitKey(10) == 27:
             video.release()

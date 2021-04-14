@@ -83,7 +83,7 @@ def get_mask_from_path(path: str, model, useGpu=True):
     predict = get_predictions(output)
     return predict
     
-def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False, isEllseg=False, ellsegPrecision=None):
+def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False, isEllseg=False, ellsegPrecision=None, useEllsegEllipseAsMask=False):
     if useGpu:
         device=torch.device("cuda")
     else:
@@ -107,25 +107,29 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
         op = model.dec(x4, x3, x2, x1, x)
         rawpredict=get_predictions(op)
         plt.imshow(rawpredict[0], cmap="BrBG", alpha=0.3)
-        ellpred = model.elReg(x, 0).view(-1)
-        #i1, i2, i3, i4, i5, p1, p2, p3, p4, p5 = ellpred[0].cpu().detach().numpy()
-        _, _, H, W = img.shape
-        H_mat = np.array([[W/2, 0, W/2], [0, H/2, H/2], [0, 0, 1]])
-        
-        #import pdb
-        #pdb.set_trace()
-        i_cx, i_cy, i_a, i_b, i_theta, _ = my_ellipse(ellpred[:5].tolist()).transform(H_mat)[0]
-        p_cx, p_cy, p_a, p_b, p_theta, _ = my_ellipse(ellpred[5:].tolist()).transform(H_mat)[0]
-        
-        ellimage = np.full((int(H), int(W)), 2/3)
-        startAngle = 0
-        endAngle = 360
-        iris_color=1/3
-        pupil_color = 0.0
-        pred_img = draw_ellipse(ellimage, (i_cx, i_cy), (i_a, i_b),
-                     i_theta, startAngle, endAngle, iris_color, -1)
-        pred_img = draw_ellipse(ellimage, (p_cx, p_cy), (p_a, p_b),
-                     p_theta, startAngle, endAngle, pupil_color, -1)
+        if useEllsegEllipseAsMask:
+            ellpred = model.elReg(x, 0).view(-1)
+            #i1, i2, i3, i4, i5, p1, p2, p3, p4, p5 = ellpred[0].cpu().detach().numpy()
+            _, _, H, W = img.shape
+            H_mat = np.array([[W/2, 0, W/2], [0, H/2, H/2], [0, 0, 1]])
+            
+            #import pdb
+            #pdb.set_trace()
+            i_cx, i_cy, i_a, i_b, i_theta, _ = my_ellipse(ellpred[:5].tolist()).transform(H_mat)[0]
+            p_cx, p_cy, p_a, p_b, p_theta, _ = my_ellipse(ellpred[5:].tolist()).transform(H_mat)[0]
+            
+            ellimage = np.full((int(H), int(W)), 2/3)
+            startAngle = 0
+            endAngle = 360
+            iris_color=1/3
+            pupil_color = 0.0
+            pred_img = draw_ellipse(ellimage, (i_cx, i_cy), (i_a, i_b),
+                         i_theta, startAngle, endAngle, iris_color, -1)
+            pred_img = draw_ellipse(ellimage, (p_cx, p_cy), (p_a, p_b),
+                         p_theta, startAngle, endAngle, pupil_color, -1)
+        else:
+            predict = rawpredict + 1
+            pred_img = 1 - predict[0].cpu().numpy()/channels
     
     #print(pred_img)
     # trim pupil if asked to
@@ -155,14 +159,14 @@ def get_mask_from_cv2_image(image, model, useGpu=True, pupilOnly=False, includeR
         return pred_img, rawpredict
     return pred_img
 
-def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False, isEllseg=False, ellsegPrecision=None):
+def get_mask_from_PIL_image(pilimage, model, useGpu=True, pupilOnly=False, includeRawPredict=False, channels=3, trim_pupil=False, isEllseg=False, ellsegPrecision=None, useEllsegEllipseAsMask=False):
     if not isEllseg:
         img = process_PIL_image(pilimage)
     else:
         img = pilimage
-    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil, isEllseg, ellsegPrecision)
+    return get_mask_from_cv2_image(img, model, useGpu, pupilOnly, includeRawPredict, channels, trim_pupil, isEllseg, ellsegPrecision, useEllsegEllipseAsMask)
     
-def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None, ellsegEllipse=False):
+def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None, ellsegEllipse=False, debugWindowName=None):
     """
     OUTPUT FORMAT
     {
@@ -212,15 +216,18 @@ def get_pupil_ellipse_from_cv2_image(image, model, useGpu=True, predict=None, is
     else:
         pred_img = predict[0].numpy()
             
-        
+    if debugWindowName is not None:
+        outIm = pred_img/np.max(pred_img)
+        print(np.unique(outIm));
+        cv2.imshow(debugWindowName, outIm)
     return get_pupil_parameters(pred_img)
     
-def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None, ellsegEllipse=False):
+def get_pupil_ellipse_from_PIL_image(pilimage, model, useGpu=True, predict=None, isEllseg=False, ellsegPrecision=None, ellsegEllipse=False, debugWindowName=None):
     if not isEllseg:
         img = process_PIL_image(pilimage)
     else:
         img = pilimage
-    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict, isEllseg, ellsegPrecision, ellsegEllipse)
+    res = get_pupil_ellipse_from_cv2_image(img, model, useGpu, predict, isEllseg, ellsegPrecision, ellsegEllipse, debugWindowName)
     if res is not None:
         res[4] = res[4] * 180 / np.pi
     return res

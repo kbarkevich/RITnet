@@ -12,9 +12,9 @@ import numpy as np
 
 
 FILE_NAME = "pp_data.txt"
-SPACING = 1
+SPACING = 10
 RANGE = None  # None for entire viceo
-IGNORE_ZEROS = True  # Frames where no pupil at all could be detected, such as during blinks and/or before the eye comes into frame, are treated as 0.0.
+IGNORE_ZEROS = False  # Frames where no pupil at all could be detected, such as during blinks and/or before the eye comes into frame, are treated as 0.0.
 
 def print_stats(file_name=FILE_NAME, spacing=SPACING, frame_range=RANGE, ignore_zeros=IGNORE_ZEROS):
     x = []
@@ -39,8 +39,8 @@ def print_stats(file_name=FILE_NAME, spacing=SPACING, frame_range=RANGE, ignore_
         plt.title("Image Pupil Scoring (every " + str(spacing) + " pixel[s])")
         plt.xlabel("frame")
         plt.ylabel("score")
-        plt.plot(x, y_pp, color='olive', label="Image Score")
-        plt.plot(x, y_pp_diff, color='blue', label="Difference Image Score, Ellipse Score")
+        plt.plot(x, y_pp, color='olive', label="Mask PP Score")
+        plt.plot(x, y_pp_diff, color='blue', label="Difference Mask PP Score, Ellipse PP Score")
         plt.plot(x, y_shape_conf, color='red', label="Pupil Shape Confidence")
         plt.ylim(bottom=0, top=1)
         plt.legend()
